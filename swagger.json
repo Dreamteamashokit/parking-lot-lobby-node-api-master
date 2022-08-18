@@ -1,0 +1,1119 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Parking Lot LObby",
+    "description": "PLL Api Documentation",
+    "termsOfService": "",
+    "contact": {
+      "name": "matrix marketer",
+      "url": "",
+      "email": ""
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.1"
+  },
+  "tags": [
+    {
+        "name": "Basic Profile",
+        "description": "Basic functions"
+    },
+    {
+      "name": "Twillio List",
+      "description": "Twilio Related routes under this Tag"
+    } ,
+    {
+      "name": "Common List",
+      "description": "Comman used functions"
+    }   
+  ],
+  "components": {
+    "parameters": {
+      "AttributeFilterParam": {
+        "in": "query",
+        "name": "_*_",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "To filter results based on a particular attribute, specify a query parameter with the same name as the attribute defined on your model. For instance, if our `Purchase` model has an `amount` attribute, we could send `GET /purchase?amount=99.99` to return a list of $99.99 purchases."
+      },
+      "WhereQueryParam": {
+        "in": "query",
+        "name": "where",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": ""
+      },
+      "LimitQueryParam": {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        },
+        "description": "The maximum number of records to send back (useful for pagination). Defaults to 30."
+      },
+      "SkipQueryParam": {
+        "in": "query",
+        "name": "skip",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        },
+        "description": "The number of records to skip (useful for pagination)."
+      },
+      "SortQueryParam": {
+        "in": "query",
+        "name": "sort",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "The sort order. By default, returned records are sorted by primary key value in ascending order.\n\ne.g. `?sort=lastName%20ASC`"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+          "type": "apiKey",
+          "name": "Authorization",
+          "in": "header"
+      }
+    },
+    "schemas": {
+      "Login":{
+        "type":"object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+          
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "Register":{
+        "type":"object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "password": {
+              "type": "string"
+          },
+          "repeatPassword": {
+          "type": "string"
+          },
+          "agreeTermCondition": {
+          "type": "boolean",
+          "default":false
+          }
+        },
+        "required": [
+          "email",
+          "firstName",
+          "lastName",
+          "password",
+          "repeatPassword",
+          "agreeTermCondition"
+        ]
+      },
+      "Forgot":{
+        "type":"object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPassword": {
+        "type":"object",
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "repeatPassword": {
+            "type": "string"
+          },
+          "resetToken": {
+            "type": "string",
+            "description":"This token was sent to email which was provied into forgot Api"
+          }
+        },
+        "required": [
+          "password",
+          "repeatPassword",
+          "resetToken"
+        ]
+      },
+      "BusinessInformation":{
+        "type":"object",
+        "properties": {
+          "companyName": {
+            "type": "string"
+          },
+          "companyAddress": {
+            "type": "string"
+          },
+          "companyNumber": {
+            "type": "string"
+          },
+          "timezone": {
+              "type": "string"
+          },
+          "language": {
+          "type": "string"
+          }                  
+        },
+        "required": [
+          "companyName",
+          "companyAddress",
+          "companyNumber"                  
+        ]
+      },
+      "AlertSettings":{
+        "type": "object",
+        "properties": {
+          "confirmationAlert": {
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":false
+              },
+              "message":{
+                "type": "string"
+              }
+            }
+          },
+          "nextInLineAlert": {
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":false
+              },
+              "message":{
+                "type": "string"
+              }
+            }
+          },
+          "checkInAlert": {
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":false
+              },
+              "message":{
+                "type": "string"
+              }
+            }
+          },
+          "checkOutAlert": {
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":false
+              },
+              "message":{
+                "type": "string"
+              }
+            }
+          },
+          "noShowAlert":{
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":false
+              },
+              "message":{
+                "type": "string"
+              }
+            }
+          },
+          "parkingSpotAlert":{
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":false
+              },
+              "message":{
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "confirmationAlert",
+          "nextInLineAlert",
+          "checkInAlert",
+          "checkOutAlert",
+          "noShowAlert",
+          "parkingSpotAlert"
+        ]
+      },
+      "AdditionalSettings":{
+        "type": "object",
+        "properties": {
+          "desktopAdditional": {
+            "type": "object",
+            "properties": {
+              "is_active":{
+                "type": "boolean",
+                "default":true
+              },
+              "is_timer":{
+                "type": "boolean",
+                "default":true
+              },
+              "is_exit":{
+                "type": "boolean",
+                "default":true
+              },
+              "is_checkIn":{
+                "type": "boolean",
+                "default":true
+              },
+              "is_delayed":{
+                "type": "boolean",
+                "default":true
+              }
+            }
+          },
+          "inforClientPositionLine":{
+            "type": "boolean",
+            "default":true
+          }
+        },
+        "required": [
+          "desktopAdditional",
+          "inforClientPositionLine"          
+        ]
+      },
+      "StylingSetting":{
+        "type":"object",
+        "properties":{
+          "stylingScreen":{
+            "type": "boolean",
+            "default":false
+          }
+        },
+        "required": [
+          "stylingScreen"
+        ]
+      },
+      "ClientInformationSettings":{
+        "type": "object",
+        "properties": {
+          "clientInformation": {
+            "type": "object",
+            "properties": {
+              "name":{
+                "type": "boolean",
+                "default":true
+              },
+              "is_required":{
+                "type": "boolean",
+                "default":true
+              },
+              "firstLastName":{
+                "type": "boolean",
+                "default":true
+              }
+            }
+          }
+        },
+        "required": [
+          "clientInformation"
+        ]
+      },
+      "TwilioSms":{
+        "type":"object",
+        "properties": {
+          "Body": {
+            "type": "string",
+            "required":true
+          },
+          "To": {
+            "type": "string",
+            "description":"privde clinic(provider) contact no.",
+            "required":true
+          },
+          "From": {
+            "type": "string",
+            "description":"privde patient contact no.",
+            "required":true
+          }
+        },
+        "required": [
+          "Body",
+          "To",
+          "From"
+        ]
+      },
+      "TwilioSend":{
+        "type":"object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "required":true
+          },
+          "message": {
+            "type": "string",
+            "required":true
+          }
+        },
+        "required": [
+          "patientId",
+          "message"
+        ]
+      },
+      "AddQuickResponse":{
+        "type":"object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "required":true
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "UpdateQuickResponse":{
+        "type":"object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "required":true
+          },
+          "responseId":{
+            "type": "string",
+            "required":true
+          }
+        },
+        "required": [
+          "message",
+          "responseId"
+        ]
+      },
+      "WaitingToCheckIn":{
+        "type":"object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "required":true
+          }
+        },
+        "required": [
+          "patientId"
+        ]
+      },
+      "CheckInToCheckOut":{
+        "type":"object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "required":true
+          }
+        },
+        "required": [
+          "patientId"
+        ]
+      },
+      "NotifyPatient":{
+        "type":"object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "required":true
+          },
+          "notifyTime": {
+            "type": "number",
+            "required":true
+          }
+        },
+        "required": [
+          "patientId",
+          "notifyTime"
+        ]
+      },
+      "MarkMessageRead":{
+        "type":"object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "required":true
+          }
+        },
+        "required": [
+          "patientId"
+        ]
+      },
+      "UpdatePatientProfile":{
+        "type":"object",
+        "required": ["patientId","first_name","last_name","fullNumber"],
+        "properties": {
+          "patientId": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "fullNumber": {
+            "type": "string"
+          }
+        }        
+      },
+      "createProfile":{
+        "type":"object",
+        "required": ["first_name","last_name","fullNumber", "dob"],
+        "properties": {
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "fullNumber": {
+            "type": "string"
+          },
+          "dob": {
+            "type": "string"
+          },
+          "visitNotes": {
+            "type": "string"
+          },
+          "parkingSpot": {
+            "type": "string"
+          }
+        }        
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Ok"
+      },
+      "404": {
+        "description": "Resource not found"
+      },
+      "500": {
+        "description": "Internal server error"
+      }
+    }
+  },
+  "paths": {
+    "/user/login": {
+        "post": {
+          "summary": "Login",
+          "description": "This for login a user",
+          "tags": [
+            "Basic Profile"
+          ],
+          "responses": {
+            "$ref": "#/components/responses"
+          },
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref":"#/components/schemas/Login"
+                }
+              }
+            }
+          }
+        }
+    },
+    "/user/register": {
+        "post": {
+          "summary": "Register",
+          "description": "This for register a user",
+          "tags": [
+            "Basic Profile"
+          ],
+          "responses": {
+            "$ref": "#/components/responses"
+          },
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref":"#/components/schemas/Register"
+                }
+              }
+            }
+          }
+        }
+    },
+    "/user/forgot": {
+        "post": {
+          "summary": "forgot",
+          "description": "This for send a email to generate new password",
+          "tags": [
+            "Basic Profile"
+          ],
+          "responses": {
+            "$ref": "#/components/responses"
+          },
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref":"#/components/schemas/Forgot"
+                }
+              }
+            }
+          }
+        }
+    },
+    "/user/reset-password": {
+      "post": {
+        "summary": "For reset password using token from email",
+        "description": "Here we can reset password by using token which was send into email from forgot Api",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/ResetPassword"
+              }
+            }
+          }
+        }
+      }
+  },
+    "/user/settings": {
+      "get": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "fetch clinic(provider) settings",
+        "description": "This for fetch clinic settings.",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        }
+      }
+    },
+    "/user/updateBusinessInformation": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "update Business Information",
+        "description": "This for Update a clinic(provider) basic Information settings",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/BusinessInformation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/updateAlertSettings": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "update Alert Settings",
+        "description": "This for Update a clinic(provider) Alert settings",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertSettings"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/updateAdditionalSettings": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "update Additional Settings",
+        "description": "This for Update a clinic(provider) Additional Information settings",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdditionalSettings"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/updateStylingSettings": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "update Styling Settings",
+        "description": "This for Update a clinic(provider) Styling settings",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StylingSetting"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/updateclientInformationSettings": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "update Additional Settings",
+        "description": "This for Update a clinic(provider) Additional Information settings",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientInformationSettings"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/getNotifications": {
+      "get": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "fetch Notifications for clinic",
+        "description": "This for fetch clinic notifications.",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        }
+      }
+    },
+    "/user/markMessageRead": {
+      "put": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "mark all message for patient as read",
+        "description": "This for mark read for messages.",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/MarkMessageRead"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/twilio/sms": {
+      "post": {
+        "summary": "For test webhook response",
+        "description": "This Api will use by twilio for webhook",
+        "tags": [
+          "Twillio List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwilioSms"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/twilio/send": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Send Message to patient",
+        "description": "This for send a message to Patient on behalf of clinic",
+        "tags": [
+          "Twillio List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/TwilioSend"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/common/fetchPatientList": {
+      "get": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "fetch Patient List",
+        "description": "This for fetch list for a clinic",
+        "tags": [
+          "Common List"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "This field for type: 1=> Waiting list, 2=> Check-In list, 3=> Client serve today list"
+          }, 
+          {
+            "in": "query",
+            "name": "searchBy",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "This field for type: 1=> Waiting list, 2=> Check-In list, 3=> Client serve today list"
+          }
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        }
+      }
+    },
+    "/common/getQuickResponse": {
+      "get": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "fetch clinic quick response messages List",
+        "description": "This for fetch list for a clinic",
+        "tags": [
+          "Common List"
+        ],
+        "parameters": [
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        }
+      }
+    },
+    "/common/addQuickResponse": {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "addQuickResponse",
+        "description": "This endpoint for add quick Responses for clinic(provider)",
+        "tags": [
+          "Common List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/AddQuickResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/common/updateQuickResponse": {
+      "put": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "update QuickResponse",
+        "description": "This endpoint for update quick Responses for clinic(provider)",
+        "tags": [
+          "Common List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/UpdateQuickResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/common/fetchPatientChat": {
+      "get": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "fetch patient messages List",
+        "description": "This for fetch patient message.",
+        "tags": [
+          "Common List"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "patientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "patient Id"
+          }
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        }
+      }
+    },
+    "/common/waitingToCheckIn": {
+      "put": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "waiting list to check in List",
+        "description": "Move patient from waiting list to check in List",
+        "tags": [
+          "Common List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/WaitingToCheckIn"
+              }
+            }
+          }
+        }
+      }
+    }, 
+    "/common/checkInToCheckOut": {
+      "put": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "check in to check out",
+        "description": "Move patient from check-In  list to check-Out List",
+        "tags": [
+          "Common List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/CheckInToCheckOut"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/common/notifyPatient": {
+      "put": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Notify Patient about check In time",
+        "description": "start a countdown for pateint",
+        "tags": [
+          "Common List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/NotifyPatient"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/updatePatientInfo" : {
+      "put": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Update profile",
+        "description": "This for update patient name or number.",
+        "tags": [
+          "Basic Profile"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/UpdatePatientProfile"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/common/addClient" : {
+      "post": {
+        "security":[
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Add profile",
+        "description": "This for add a new  patient",
+        "tags": [
+          "Common List"
+        ],
+        "responses": {
+          "$ref": "#/components/responses"
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref":"#/components/schemas/createProfile"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

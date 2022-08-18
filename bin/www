@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('express:server');
+var http = require('http');
+const socketServer =require('socket.io');
+require('dotenv').config()
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+/**
+ * setup socket
+ */
+ const socketio = new socketServer.Server(server, {
+  allowEIO3:true,
+  wsEngine: require("eiows").Server,
+  perMessageDeflate: {
+    threshold: 32768
+  },
+  cors: {
+    origin: ["https://pll.matrixm.io", 
+    "http://pll.matrixm.io",
+    "http://localhost:8080",
+    "https://app.parkinglotlobby.com",
+    "http://app.parkinglotlobby.com" 
+  ],
+    credentials: true
+  }
+});
+global.io = socketio.listen(server);
+global.io.connections = [];
+global.io.on('connection', function (socket) {
+  console.log("Connected to Socket!!"+ socket.id)	
+	global.io.connections.push(socket)
+	socket.on('disconnect', function(){
+		console.log('Disconnected - '+ socket.id);
+	});
+  //======user userid as roomId=====//
+  socket.on("subscribe", (roomId, locationId) => {
+    console.log('\n subscribe:', roomId, locationId)
+    socket.join(`room_${roomId}`);
+  });
+  //======user userid as roomId=====//
+  socket.on("unsubscribe", (roomId, locationId) => {
+    console.log('\n unsubscribe:', roomId, locationId)
+    socket.leave(`room_${roomId}`);
+  });
+  socket.on("open-notification", (patientId, userId, locationId) => {
+    if(userId) {
+      io.sockets.to(`room_${userId}`).emit('open-notification-modal', patientId, locationId);
+    } else {
+      socket.emit("open-notification-modal",patientId, locationId)
+    }
+  });
+});
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  console.log('\n addr.port::', addr.port)
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
