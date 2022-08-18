@@ -57,6 +57,16 @@ try {
   return res.status(statusCode).send({status:false, statusCode:statusCode, message :message , data:{}})
 }
 });
+router.get("/jotform-list", async (req,res)=> {
+  try {
+    let response = await AdminController.jotformList(req.query);
+    return res.status(200).send({status:true,statusCode:200,message: "fetch data successfully" ,  data:response})
+  } catch(err) {
+    let statusCode = err.status || 500;
+    let message = err && err.message ? err.message : 'Something went wrong';
+    return res.status(statusCode).send({status:false, statusCode:statusCode, message :message , data:{}})
+  }
+  });
 router.get("/client-location", async (req,res)=> {
   try {
     let response = await AdminController.clientLocations(req.query); // // req.userData => admin data
@@ -70,6 +80,16 @@ router.get("/client-location", async (req,res)=> {
 router.post("/add-twilio-number", async (req,res)=> {
   try {
     let response = await AdminController.addTwilioNumber(req.body); // // req.userData => admin data
+    return res.status(200).send({status:true,statusCode:200,message: "update number successfully" ,  data:response})
+  } catch(err) {
+    let statusCode = err.status || 500;
+    let message = err && err.message ? err.message : 'Something went wrong';
+    return res.status(statusCode).send({status:false, statusCode:statusCode, message :message , data:{}})
+  }
+});
+router.post("/add-location-jotform", async (req,res)=> {
+  try {
+    let response = await AdminController.addLocationJotform(req.body); // // req.userData => admin data
     return res.status(200).send({status:true,statusCode:200,message: "update number successfully" ,  data:response})
   } catch(err) {
     let statusCode = err.status || 500;
@@ -94,6 +114,17 @@ router.post('/add-client-location', async (req,res, next) => {
     return res.status(201).send({status:true,statusCode:201, message: commonFunctions.getSuccessMessage('POST') ,  data:response})
   } catch (err) {
     console.log('\n error add-client-location:', err)
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({status:false,statusCode:statusCode, message :message , data:{}})
+  }
+})
+router.post('/add-jotform', async (req,res, next) => {
+  try {
+
+    let response = await AdminController.addJotform(req.body)
+    return res.status(201).send({status:true,statusCode:201, message: commonFunctions.getSuccessMessage('POST') ,  data:response})
+  } catch (err) {
     let message = err.message || 'Something went wrong';
     let statusCode = err.status || 500;
     res.status(statusCode).send({status:false,statusCode:statusCode, message :message , data:{}})

@@ -4,6 +4,7 @@ const Schema  = mongoose.Schema;
 var locationSchema = Schema({
     clinicId:{type:Schema.Types.ObjectId,ref:'user'},
     name:{type:String},
+    jotformId:{type:Schema.Types.ObjectId,ref:'jotform'},
     isOpen:{type:Boolean, default:false},
     isActive:{type:Boolean, default:true},
     isDefault:{type:Boolean,default:false},
@@ -17,4 +18,5 @@ var locationSchema = Schema({
 });
 locationSchema.index({ id: -1 });
 locationSchema.index({clinicId:-1});
+locationSchema.index({jotformId:-1});
 module.exports = mongoose.model("location", locationSchema);
