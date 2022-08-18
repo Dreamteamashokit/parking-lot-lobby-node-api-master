@@ -540,7 +540,7 @@ const fetchJotformId = async (locationId = null, formNumber = 1) => {
             }];
     const location = await DBoperations.findOne(locationSchema, {_id: mongoose.Types.ObjectId(locationId)}, {}, {})
     .populate(populateQuery).exec();
-    return location?.jotformId?.jotformId || ''
+    return location?.jotformId?.jotformId || '212075810747152'
 }
 const verifyLocationId = async function (userData) {
     return new Promise(async (resolve, reject) => {
