@@ -14,6 +14,7 @@ import * as PDFDocument from 'html-pdf';
 import axios from "axios";
 
 import * as dotenv from 'dotenv';
+var mongoose = require('mongoose');
 dotenv.config();
 
 if (!process.env.SENDGRID_API_KEY) {
@@ -530,22 +531,16 @@ const getformatedStartEndDay = (date) => {
         }
     })
 }
-const fetchJotformId = (LocationId=null, formNumber = 1) => {
-    return new Promise((resolve, reject) => {
-        try {
-            switch (formNumber) {
-                case 1:
-                    return resolve('212075810747152') // 212500804377046
-                case 2:
-                    return resolve('212126078763153') // 212500804377046
-                default:
-                    return resolve() // 212500804377046
-            }
-
-        } catch (err) {
-            return reject(err);
-        }
-    })
+const fetchJotformId = async (locationId = null, formNumber = 1) => {
+    const populateQuery = [{
+                path: 'jotformId',
+                select: {
+                    jotformId: 1,
+                }
+            }];
+    const location = await DBoperations.findOne(locationSchema, {_id: mongoose.Types.ObjectId(locationId)}, {}, {})
+    .populate(populateQuery).exec();
+    return location?.jotformId?.jotformId || '212075810747152'
 }
 const verifyLocationId = async function (userData) {
     return new Promise(async (resolve, reject) => {

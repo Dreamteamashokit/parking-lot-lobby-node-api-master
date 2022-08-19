@@ -5,6 +5,7 @@ import quickResponses from './quickResponses';
 import settingSchema from './settings';
 import location from './location';
 import review from './reviews';
+import jotformSchema from './jotform';
 import subPatientSchema from './subPatient';
 module.exports = {
     User:User,
@@ -14,5 +15,6 @@ module.exports = {
     settingSchema:settingSchema,
     locationSchema:location,
     reviewSchema:review,
+    jotformSchema,
     SubPatientSchema: subPatientSchema
 }
