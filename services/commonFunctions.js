@@ -476,6 +476,50 @@ const getFormQuestions = (formID) => {
         }
     })
 }
+
+const postFormQuestions = (formID, questionData) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const formQuestions = await jotform.addFormQuestions(formID, questionData);
+            return resolve(formQuestions);
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+
+const getForms = () => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const forms = await jotform.getForms();
+            return resolve(forms);
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+
+const cloneForm = (formID) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const forms = await jotform.cloneForm(formID);
+            return resolve(forms);
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+
+const deleteForm = (formID) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const forms = await jotform.deleteForm(formID);
+            return resolve(forms);
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
 const createFormSubmission = (formID, submissions) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -758,6 +802,10 @@ const commonFunctions = {
     addMinutes: addMinutes,
     getEnvVariable: getEnvVariable,
     getFormQuestions: getFormQuestions,
+    postFormQuestions,
+    getForms,
+    cloneForm,
+    deleteForm,
     createFormSubmission: createFormSubmission,
     editFormSubmission: editFormSubmission,
     formatDate: formatDate,
