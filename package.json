@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --trace-uncaught --trace-warnings --exec babel-node ./bin/www"
+    "start": "nodemon --exec babel-node ./bin/www"
   },
   "dependencies": {
     "@sendgrid/mail": "^7.4.4",
@@ -16,6 +16,7 @@
     "eiows": "^3.7.3",
     "ejs": "~2.6.1",
     "express": "^4.16.4",
+    "form-data": "^4.0.0",
     "html-pdf": "^3.0.1",
     "http-errors": "^1.6.3",
     "jotform": "^0.1.5",

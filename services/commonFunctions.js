@@ -34,13 +34,13 @@ if (!process.env.JOT_FORM_URL) {
     throw new Error('Missing enviornment variable: JOT_FORM_URL');
 }
 
-if(!process.env.BITLY_URL || !process.env.BITLY_TOKEN) {
+if (!process.env.BITLY_URL || !process.env.BITLY_TOKEN) {
     throw new Error("Missing bitly configure in env file : BITLY_URL OR BITLY_TOKEN");
 }
 
 
 jotform.options({
-    url: process.env.JOT_FORM_URL, 
+    url: process.env.JOT_FORM_URL,
     debug: true,
     apiKey: process.env.JOT_FORM_KEY
 });
@@ -210,7 +210,7 @@ const sendTwilioMessage = async (payloadData) => {
             }
         });
         console.log("\n on complete twilio send sms...");
-       return Promise.resolve(state);
+        return Promise.resolve(state);
     } catch (error_1) {
         console.log("\n on error in twilio send sms...", error_1.message || error_1);
         return Promise.reject(error_1);
@@ -233,7 +233,7 @@ const checkSettingAndUpdateMessage = (checkFor, clinicId, patientData, locationI
                 business: (clinicSetting && clinicSetting.businessInformation && clinicSetting.businessInformation.companyName) ? clinicSetting.businessInformation.companyName : "Our business",
                 reviewLink: `${baseUrl}/review/${locationId}/${patientData._id}`,
                 clinicNumber: (clinicSetting && clinicSetting.businessInformation && clinicSetting.businessInformation.companyNumber) ? clinicSetting.businessInformation.companyNumber : "Our office number",
-                jotUrl:jotFormUrl
+                jotUrl: jotFormUrl
             }
             if (clinicSetting) {
                 switch (checkFor) {
@@ -297,12 +297,12 @@ const checkSettingAndUpdateMessage = (checkFor, clinicId, patientData, locationI
                         if (clinicSetting.providerNotAtDeskAlert && clinicSetting.providerNotAtDeskAlert.is_active) {
                             let replacedMessage = `Please call our office number at : ${placeHolderValues.clinicNumber}`;
                             const certainTime = clinicSetting.providerNotAtDeskAlert.certainTime || 15;
-                            if(clinicSetting.providerNotAtDeskAlert.message) {
+                            if (clinicSetting.providerNotAtDeskAlert.message) {
                                 replacedMessage = format(clinicSetting.providerNotAtDeskAlert.message, placeHolderValues)
                             }
-                            return resolve({ status: true, message: replacedMessage,certainTime:certainTime, count: count, totalCount: totalCount, businessName: placeHolderValues.business });
+                            return resolve({ status: true, message: replacedMessage, certainTime: certainTime, count: count, totalCount: totalCount, businessName: placeHolderValues.business });
                         } else {
-                            return resolve({ status: false, message: null, certainTime:0, count: count, totalCount: totalCount, businessName: placeHolderValues.business });
+                            return resolve({ status: false, message: null, certainTime: 0, count: count, totalCount: totalCount, businessName: placeHolderValues.business });
                         }
                     default:
                         return resolve({ status: false, message: null, count: count, totalCount: totalCount, businessName: placeHolderValues.business });
@@ -349,7 +349,7 @@ const getCountForWaitingList = (clinicId = null, patientId = null, locationId = 
         }
     })
 }
-const updateMessage = (locationId = null, clinicId = null, patientId = null, content = '', type = 2, isTwilio=false) => {
+const updateMessage = (locationId = null, clinicId = null, patientId = null, content = '', type = 2, isTwilio = false) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (!locationId || !clinicId || !patientId) {
@@ -361,7 +361,7 @@ const updateMessage = (locationId = null, clinicId = null, patientId = null, con
                 clinicId: clinicId,
                 locationId: locationId,
                 type: type,
-                twilioSend:isTwilio
+                twilioSend: isTwilio
             }
             if (type === 2) {
                 payload['isReadByAdmin'] = true;
@@ -404,7 +404,7 @@ const initialUpdateMessage = (locationId = null, clinicId = null, patientId = nu
                 clinicId: clinicId,
                 locationId: locationId,
                 type: type,
-                initial_message:true
+                initial_message: true
             }
             const response = await DBoperations.saveData(Message, payload);
             return resolve(response);
@@ -482,6 +482,43 @@ const postFormQuestions = (formID, questionData) => {
         try {
             const formQuestions = await jotform.addFormQuestions(formID, questionData);
             return resolve(formQuestions);
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+const addFormQuestion = (formID, questionData) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const data = await jotform.getFormQuestion(formID, questionData);
+            return resolve(data);
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+
+const editFormQuestion = (id, qid, formData) => {
+    const apikey = process.env.JOT_FORM_KEY;
+    return new Promise(async (resolve, reject) => {
+        try {
+            const data = await axios.post(
+                `${process.env.JOT_FORM_URL}/form/${id}/question/${qid}`,
+                formData,
+                { params: { apikey }, headers: formData.getHeaders() }
+            )
+            return resolve({ 'pp': data.data});
+        } catch (err) {
+            return reject(err)
+        }
+    })
+}
+
+const deleteFormQuestion = (formID, questionId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const data = await jotform.deleteFormQuestion(formID, questionId);
+            return resolve(data);
         } catch (err) {
             return reject(err)
         }
@@ -577,13 +614,13 @@ const getformatedStartEndDay = (date) => {
 }
 const fetchJotformId = async (locationId = null, formNumber = 1) => {
     const populateQuery = [{
-                path: 'jotformId',
-                select: {
-                    jotformId: 1,
-                }
-            }];
-    const location = await DBoperations.findOne(locationSchema, {_id: mongoose.Types.ObjectId(locationId)}, {}, {})
-    .populate(populateQuery).exec();
+        path: 'jotformId',
+        select: {
+            jotformId: 1,
+        }
+    }];
+    const location = await DBoperations.findOne(locationSchema, { _id: mongoose.Types.ObjectId(locationId) }, {}, {})
+        .populate(populateQuery).exec();
     return location?.jotformId?.jotformId || '212075810747152'
 }
 const verifyLocationId = async function (userData) {
@@ -709,50 +746,50 @@ const saveToPdfFile = (html, submissionID) => {
 }
 const shorterUrl = async (longUrl) => {
     try {
-        if(!process.env.BITLY_URL || !process.env.BITLY_TOKEN) {
-            return Promise.resolve({status:false, message:'Missing bitly basic configuration', short_response:{}});
+        if (!process.env.BITLY_URL || !process.env.BITLY_TOKEN) {
+            return Promise.resolve({ status: false, message: 'Missing bitly basic configuration', short_response: {} });
         }
         const payload = {
             "domain": "bit.ly",
             "long_url": longUrl
-        } 
+        }
         const url = process.env.BITLY_URL;
         const options = {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.BITLY_TOKEN}`},
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.BITLY_TOKEN}` },
             data: JSON.stringify(payload),
             url,
-          };
+        };
         const response = await axios(options);
-        if(response && response.data)
-        return Promise.resolve({status:true, message:'success', short_response:response.data});
-        else 
-        return Promise.resolve({status:false, message:'not not found', short_response:{}});
+        if (response && response.data)
+            return Promise.resolve({ status: true, message: 'success', short_response: response.data });
+        else
+            return Promise.resolve({ status: false, message: 'not not found', short_response: {} });
 
-    } catch (err){
-        console.log("\n error here:", err,"\n\n\n\n")
+    } catch (err) {
+        console.log("\n error here:", err, "\n\n\n\n")
         const message = err && err.message ? err.message : 'Error in shorter url.';
-        return Promise.resolve({status:false, message:message, short_response:{}});
- }
+        return Promise.resolve({ status: false, message: message, short_response: {} });
+    }
 }
 const addAdmin = async () => {
-    return new Promise(async(resolve)=>{
+    return new Promise(async (resolve) => {
         try {
             const admin_email = "admin@parkinglotlobby.com";
             const admin_password = "Admin@pll";
-            var checkEmailExist = await DBoperations.findOne(User,{email: admin_email, userType:3}, {}, {lean: true} );
-            if(!checkEmailExist) {
+            var checkEmailExist = await DBoperations.findOne(User, { email: admin_email, userType: 3 }, {}, { lean: true });
+            if (!checkEmailExist) {
                 const cryptedPassword = await createHash(admin_password);
                 const payload = {
                     email: admin_email,
                     password: cryptedPassword,
-                    agreeTermCondition:true,
+                    agreeTermCondition: true,
                     first_name: "admin",
                     last_name: "user",
-                    userType:3,
-                    gender:1
+                    userType: 3,
+                    gender: 1
                 }
-                await DBoperations.saveData(User,payload);
+                await DBoperations.saveData(User, payload);
             }
             return resolve(true);
         } catch (err) {
@@ -772,17 +809,18 @@ const getWeekMonthYearStartEnd = () => {
 
             var yearStart = moment(new Date()).utc().utcOffset('-0500').startOf('year');
             var yearEnd = moment(new Date()).utc().utcOffset('-0500').endOf('year');
-            
-            return resolve({ 
-                weekStart: weekStart, weekEnd: weekEnd, 
-                monthStart:monthStart, monthEnd:monthEnd,
-                yearStart:yearStart, yearEnd:yearEnd
+
+            return resolve({
+                weekStart: weekStart, weekEnd: weekEnd,
+                monthStart: monthStart, monthEnd: monthEnd,
+                yearStart: yearStart, yearEnd: yearEnd
             });
         } catch (err) {
             return reject(err);
         }
     })
 }
+
 const commonFunctions = {
     compareHashPassword: compareHashPassword,
     createHash: createHash,
@@ -797,12 +835,15 @@ const commonFunctions = {
     checkSettingAndUpdateMessage: checkSettingAndUpdateMessage,
     getCountForWaitingList: getCountForWaitingList,
     updateMessage: updateMessage,
-    initialUpdateMessage:initialUpdateMessage,
+    initialUpdateMessage: initialUpdateMessage,
     sendMail: sendMail,
     addMinutes: addMinutes,
     getEnvVariable: getEnvVariable,
     getFormQuestions: getFormQuestions,
-    postFormQuestions,
+    postFormQuestions: postFormQuestions,
+    addFormQuestion2: addFormQuestion,
+    editFormQuestion,
+    deleteFormQuestion,
     getForms,
     cloneForm,
     deleteForm,
