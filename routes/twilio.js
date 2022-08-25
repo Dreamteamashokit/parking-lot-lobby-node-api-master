@@ -1,7 +1,7 @@
 import express from 'express';
 var router = express.Router();
 import Twilio from 'twilio';
-import {commonFunctions} from '../services';
+import {commonFunctions, logger} from '../services';
 const MessagingResponse = Twilio.twiml.MessagingResponse;
 import {TwilioController} from '../controller';
 import multer from 'multer';
@@ -38,11 +38,14 @@ router.post('/jotNotification',upload.any(),async function (req, res) {
     console.log('\n req.body:', req.body.submissionID, '\n formID:', req.body.formID);
     if(req.body && req.body.submissionID && req.body.rawRequest) {
       await TwilioController.jotNotification(req.body);
+    } else {
+      throw Error('Data Missing')
     }
     return res.send('ok');
   } catch (error) {
+    logger.error({body: req.body, error: error.message || error})
     console.log('\n jotnotification error:', error.message || error) ;
-    return res.send('ok');
+    return res.status(400).send({error: error.message || error});
   }
 })
 router.use(async function (req, res, next) {
