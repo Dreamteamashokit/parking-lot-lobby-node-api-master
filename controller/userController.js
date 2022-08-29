@@ -809,6 +809,9 @@ class UserController {
                     }
                 );
                 const patientList=await DbOperations.aggregateData(ClinicPatient,aggregate);
+                for (const p of patientList) {
+                    p['isExisting'] = (await DbOperations.count(ClinicPatient, {patientId: p.patientId._id})) > 1;
+                }
                 return resolve(patientList);
             } catch (err) {
                 return reject(err);
