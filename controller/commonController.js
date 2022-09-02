@@ -1489,7 +1489,8 @@ class CommonController {
           case 1:
             const response_form1 = await submissionFormDynamic(
               response,
-              payloadData.submissionID
+              payloadData.submissionID,
+              payloadData.preview
             );
             return resolve(response_form1);
           default:
@@ -1831,7 +1832,7 @@ async function jotFormUpdate(
     }
   });
 }
-async function submissionFormDynamic(response, submissionID) {
+async function submissionFormDynamic(response, submissionID, isPreview = false) {
   return new Promise(async (resolve, reject) => {
     try {
       if (!response || !response.hasOwnProperty("answers")) {
@@ -1851,28 +1852,36 @@ async function submissionFormDynamic(response, submissionID) {
         }
       }
       answers.sort((a, b) => Number(a.order) - Number(b.order))
-      let html = `<html><head><h1>Patient Detail</h1><style>
-                        .img {margin-left: auto;margin-right: auto;width: 30%;height: 50%;}
-                        .row {float:left;width: 100%;border-bottom: 1px solid #eee; margin: 5px 0px;}
+      let html = `<html class="pdf-p"><head><h1>Patient Detail</h1>
+                    <link href="https://css.gg/css?=|copy|software-download" rel="stylesheet">
+                    <style>
+                        .p-img {margin-left: auto;margin-right: auto;width: 30%;height: 50%;}
+                        .p-row {float:left;width: 100%;border-bottom: 1px solid #eee; margin: 5px 0px;}
                         td { vertical-align: middle; }
-                        .col-4 {float:left;height: auto;margin-left: 10px;width:40%;font-size: 14px;font-weight: 600; color: #060b33; padding: 5px 0}
-                        .col-8 {float:right;margin-left: 11px;width:55%;font-size: 12px;text-align: left; color: #4c5163; padding: 5px 0}
-                        .col-8 td { font-size: 12px }
-                        .col-8 td:first-child { font-weight: 500; color: #060b33}
-                        .col-8 td:last-child { color: #4c5163}
+                        .p-col-4 {float:left;height: auto;margin-left: 10px;width:40%;font-size: 14px;font-weight: 600; color: #060b33; padding: 5px 0}
+                        .p-col-8 {float:right;margin-left: 11px;width:55%;font-size: 12px;text-align: left; color: #4c5163; padding: 5px 0; position: relative}
+                        .p-col-8 td { font-size: 12px }
+                        .p-col-8 td:first-child { font-weight: 500; color: #060b33}
+                        .p-col-8 td:last-child { color: #4c5163}
+                        .p-btn { position: absolute; right: 30px; top: 0; cursor: pointer}
+                        .p-pr-35 { padding-right: 35px }
                         </style></head><body style="font-family: Circular,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;">`;
-      html += `<div class="row">
-                        <span class="col-4">Submission Date</span>
-                        <span class="col-8">${moment(response.created_at).format('MMMM Do YYYY, h:mm:ss a')}</span>
+      html += `<div class="p-row">
+                        <span class="p-col-4">Submission Date</span>
+                        <span class="p-col-8">${moment(response.created_at).format('MMMM Do YYYY, h:mm:ss a')}</span>
                         </div>`;
       for (let el of answers) {
-        html += `<div class="row">
-        <span class="col-4">${el.text}</span>
-        <span class="col-8">${el?.isLink ? '<img class="img" src="' + el?.ans + '" alt="image" />' : el?.ans}</span>
-        </div>`;
+        html += `<div class="p-row">`;
+        html += `<span class="p-col-4">${el.text}</span>`;
+        html += `<span class="p-col-8 ${isPreview ? 'p-pr-35' : ''}">
+                  ${el?.isLink ? '<img class="p-img" src="' + el?.ans + '" alt="' + el?.name + '" />' : el?.ans}`;
+        html += isPreview ? `<span class="p-btn"  onclick="copyData(this, ${el?.isLink ? 1 : 0})"><i class="gg-${el?.isLink ? 'software-download' : 'copy'}"></i></span>` : '';
+        html += `</span></div>`;
       }
-
       html += `</body></html>`;
+      if(isPreview) {
+        return resolve(html);
+      }
       const saveResponse = await commonFunctions.saveToPdfFile(
         html,
         submissionID
