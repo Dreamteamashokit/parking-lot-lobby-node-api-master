@@ -25,12 +25,14 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.3",
     "node-cron": "^3.0.0",
+    "rotating-file-stream": "^2.1.6",
     "socket.io": "^4.1.2",
     "string-format": "^2.0.0",
     "swagger-ui-express": "^4.1.6",
     "twilio": "^3.61.0",
     "underscore": "^1.13.1",
-    "winston": "^3.8.1"
+    "winston": "^3.8.1",
+    "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
     "@babel/core": "^7.13.16",

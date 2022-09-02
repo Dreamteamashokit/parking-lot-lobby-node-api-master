@@ -2,7 +2,8 @@ import createError from 'http-errors'
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
-import logger from 'morgan';
+import morgan from 'morgan';
+import rfs from 'rotating-file-stream';
 import {userRouter, twilioRouter, commonRouter, adminRouter} from './routes/index.js'
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger.json';
@@ -39,6 +40,11 @@ if(!process.env.WEBSITE_URL) {
   throw new Error('Missing enviornment variable: WEBSITE_URL');
 }
 var app = express();
+// var accessLogStream = rfs.createStream('access.log', {
+//   interval: '1d', // rotate daily
+//   path: path.join(__dirname, 'logs')
+// })
+// app.use(morgan('combined', { stream: accessLogStream }))
 app.use(cors());
 const url = (process.env.SERVER=== 'local') ? `${process.env.HOST}:${process.env.PORT}` : process.env.BASEURL;
 swaggerDocument.servers = [
@@ -67,7 +73,7 @@ mongoose.connection.on('open',()=>{
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(logger('dev'));
+// app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
