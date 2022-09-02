@@ -7,7 +7,7 @@ import {
   reviewSchema,
   SubPatientSchema,
 } from "../models";
-import { DbOperations, commonFunctions } from "../services";
+import { DbOperations, commonFunctions, logger } from "../services";
 
 if (!process.env.HIPPA_JOT_URL) {
   throw new Error("Missing enviornment variable: HIPPA_JOT_URL");
@@ -544,6 +544,7 @@ class TwilioController {
         //}
         return resolve(true);
       } catch (error) {
+        logger.error({path: 'twillio controller 547', error: error.message || error})
         if (error.name === "MongoError" && error.code === 11000) {
           return reject(
             new Error(
@@ -866,6 +867,7 @@ async function checkRequestedMessage(
               ClinicPatient,
               clinicPayload
             );
+            logger.dump({path: 'twillio route: 870', body: clinicPayload})
             // here we will add field with url and send due to hippa security on edit
             const responseJotFormUrl = await jotFormSubmit(
               locationId,
@@ -885,6 +887,7 @@ async function checkRequestedMessage(
               { _id: existClinicPatient._id },
               clinicPayload
             );
+            logger.dump({path: 'twillio route: 890', body: clinicPayload, existClinicPatient})
             // here we will add field with url and send due to hippa security on edit
             const responseJotFormUrl = await jotFormSubmit(
               locationId,
@@ -912,6 +915,7 @@ async function checkRequestedMessage(
         }
       }
     } catch (err) {
+      logger.error({path: 'twillio controller 916', error: err.message || err})
       console.log("\n err:", err);
       return resolve({
         reply: commonFunctions.getReplyMessage("no_match"),
@@ -929,6 +933,7 @@ async function jotFormSubmit(locationId, patientId, JotFormId, fullNumber) {
         encodedClientPatientId = encodeURIComponent("clientPatientId");
 
       const jotFormUrl = `${process.env.HIPPA_JOT_URL}/${JotFormId}?${encodedPatientNumber}=${fullNumber}&${encodedLocationId}=${locationId}&${encodedClientPatientId}=${patientId}`;
+      logger.dump({path: 'twillio controller: 934', jotFormUrl})
       const { status, message, short_response } =
         await commonFunctions.shorterUrl(jotFormUrl);
       if (!status) {
@@ -942,6 +947,7 @@ async function jotFormSubmit(locationId, patientId, JotFormId, fullNumber) {
           : jotFormUrl;
       return resolve(encodeURI(short_url));
     } catch (err) {
+      logger.error({path: 'twillio controller 946', jotFormUrl, error: err.message || err})
       console.log("\n twilio jotform err:", err.message || err);
       return reject(err);
     }
