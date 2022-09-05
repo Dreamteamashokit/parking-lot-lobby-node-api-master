@@ -700,7 +700,8 @@ class UserController {
                 let visitDate ={ $gte: new Date(start), $lte: new Date(end)};
                 
                 if(payloadData.visitDate) {
-                    let {start,end} = await commonFunctions.getformatedStartEndDay(payloadData.visitDate); 
+                    const visitDate2 = new Date(payloadData.visitDate).toUTCString().substring(0, 16)
+                    let {start,end} = await commonFunctions.getformatedStartEndDay(visitDate2); 
                     visitDate ={ $gte: new Date(start), $lte: new Date(end)} ;
                 } 
                 console.log("visitDate", visitDate);
