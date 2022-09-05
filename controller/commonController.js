@@ -315,6 +315,9 @@ class CommonController {
           ClinicPatient,
           aggregate
         );
+        for (const p of existClinicPatient) {
+          p['isExisting'] = (await DbOperations.count(ClinicPatient, {patientId: p.patientId._id})) > 1;
+        }
         //const existClinicPatient = await DbOperations.getData(ClinicPatient,queryPayload, {}, {lean: true}, populateQuery);
         return resolve(existClinicPatient);
       } catch (err) {
@@ -1863,7 +1866,10 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
                         .p-col-8 td { font-size: 12px }
                         .p-col-8 td:first-child { font-weight: 500; color: #060b33}
                         .p-col-8 td:last-child { color: #4c5163}
-                        .p-btn { position: absolute; right: 30px; top: 0; cursor: pointer}
+                        .p-btn { position: absolute; right: 30px; top: 0}
+                        .p-btn-d { display: flex; flex-direction: column; gap: 2px; font-size: 10px }
+                        .p-btn-d > a { background: #4c5163; color: #fff; padding: 1px 6px; border-radius: 5px; cursor: pointer }
+                        .p-pointer {cursor: pointer}
                         .p-pr-35 { padding-right: 35px }
                         </style></head><body style="font-family: Circular,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;">`;
       html += `<div class="p-row">
@@ -1875,7 +1881,16 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
         html += `<span class="p-col-4">${el.text}</span>`;
         html += `<span class="p-col-8 ${isPreview ? 'p-pr-35' : ''}">
                   ${el?.isLink ? '<img class="p-img" src="' + el?.ans + '" alt="' + el?.name + '" />' : el?.ans}`;
-        html += isPreview ? `<span class="p-btn"  onclick="copyData(this, ${el?.isLink ? 1 : 0})"><i class="gg-${el?.isLink ? 'software-download' : 'copy'}"></i></span>` : '';
+        if(isPreview && el?.isLink) {
+          const fname = el?.ans.split('/').pop().split('.')[0];
+          html += `<span class="p-btn p-btn-d">
+                      <a href="${el?.ans}" download="${fname}.png" >PNG</a>
+                      <a href="https://testapi.parkinglotlobby.com/common/download/jpg?url=${el?.ans}" download="${fname}.jpg" >JPG</a>
+                      <a href="https://testapi.parkinglotlobby.com/common/download/bmp?url=${el?.ans}" download="${fname}.bmp" >BMP</a>
+                  </span>`;
+        } else if(isPreview) {
+          html += `<span class="p-btn p-pointer" onclick="copyData(this)"><i class="gg-copy"></i></span>`;
+        }
         html += `</span></div>`;
       }
       html += `</body></html>`;

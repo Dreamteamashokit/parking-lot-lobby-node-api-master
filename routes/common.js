@@ -1,11 +1,30 @@
 import express from 'express';
 var router = express.Router();
+import jimp from "jimp";
 import {commonFunctions} from '../services';
 import {CommonController} from '../controller';
 
 router.get('/',async (req,res) => {
   try {
     return res.status(200).end('Common Route....')
+  } catch (err) {
+    let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
+    return res.status(500).send({status:false, message:message})
+  }
+})
+router.get('/download/:type',async (req,res) => {
+  try {
+    let mime;
+    let fileName = `${req.query.url.split('/').pop().split('.')[0]}.${req.params.type}`;
+    switch(req.params.type.toLowerCase()) {
+      case 'jpg': mime = jimp.MIME_JPEG; break;
+      case 'bmp': mime = jimp.MIME_BMP; break;
+      default: mime = jimp.MIME_PNG
+    }
+    let image = await jimp.read(req.query.url);
+    res.set('Content-Type', mime);
+    res.set('Content-Disposition', `attachment; filename="${fileName}"`,);
+    return res.send(await image.getBufferAsync(jimp.MIME_JPEG))
   } catch (err) {
     let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
     return res.status(500).send({status:false, message:message})
