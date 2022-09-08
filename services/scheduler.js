@@ -10,6 +10,7 @@ import {
 import commonFunctions from "./commonFunctions";
 import DBoperations from "./DBoperations";
 import moment from "moment";
+import mongoose from 'mongoose';
 
 if (!process.env.HIPPA_JOT_URL) {
   throw new Error("Missing enviornment variable: HIPPA_JOT_URL");
@@ -400,6 +401,45 @@ const checkProvidernotAtDesk = function () {
     }
   });
 };
+// Run every Minute
+const scheduleClinicOpening = function () {
+  return cron.schedule("* * * * *", async () => {
+    try {
+      const clinicLocationsData = await DBoperations.findAll(locationSchema, {
+          isActive: true,
+          isScheduleOpen: true,
+        },
+        {},
+        {}
+      );
+      const isDateMatch = (scheduleTime, offset) => {
+        const currentTime = moment().utcOffset(offset).format('HH:mm');
+        return scheduleTime === currentTime
+      }
+      const emitOpening = (clinic, isOpen) => {
+        io.sockets
+            .to(`room_${clinic.clinicId}`)
+            .emit("location-open", {
+                clientId: clinic.clinicId,
+                locationId: clinic._id,
+                isOpen,
+            });
+      }
+      for (const clinic of clinicLocationsData) {
+        if(isDateMatch(clinic.openingTime, clinic.selectedTimeZone.offset)) {
+          emitOpening(clinic, true);
+          await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: true}, {});
+        } else if(isDateMatch(clinic.closingTime, clinic.selectedTimeZone.offset)) {
+          emitOpening(clinic, false);
+          await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: false}, {});
+        }
+      }
+      return true;
+    } catch (err) {
+      console.log("\n error in checkInProviderNotAtDesk:", err.message || err);
+    }
+  });
+};
 const sendStatusToPatients = function () {
   return cron.schedule("* * * * *", async () => {
     try {
@@ -736,6 +776,7 @@ const scheduler = {
   checkPaperworkAndReminder: checkPaperworkAndReminder,
   checkProvidernotAtDesk: checkProvidernotAtDesk,
   sendStatusToPatients: sendStatusToPatients,
+  scheduleClinicOpening: scheduleClinicOpening,
 };
 
 module.exports = scheduler;
