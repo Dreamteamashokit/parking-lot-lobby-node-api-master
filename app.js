@@ -113,4 +113,5 @@ scheduler.updateNameChangeRequest();
 scheduler.checkPaperworkAndReminder();
 scheduler.checkProvidernotAtDesk();
 scheduler.sendStatusToPatients();
+scheduler.scheduleClinicOpening();
 module.exports = app;

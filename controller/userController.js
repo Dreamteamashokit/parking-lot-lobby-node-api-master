@@ -174,8 +174,9 @@ class UserController {
             try {
                 await commonFunctions.checkUserInformation(userData);
                 const criteria = {clinicId:userData.id};
-                const response = await DbOperations.findOne(settingSchema,criteria, {}, {} );
-                return resolve(response);
+                let response = await DbOperations.findOne(settingSchema,criteria, {}, {} );
+                let response2 = await DbOperations.findOne(locationSchema, {_id: userData.locationId}, {openingTime: 1, isOpen: 1, closingTime: 1, isScheduleOpen: 1, selectedTimeZone: 1}, {});    
+                return resolve({...response.toJSON(), scheduleInformation: response2.toJSON()});
             } catch (err) {
                 return reject(err);
             }
@@ -944,6 +945,36 @@ class UserController {
                 await commonFunctions.checkUserInformation(userData);
                 const criteria = {_id:userData.locationId};
                 const QuerypayLoad ={ isOpen: payloadData.isOpen}
+                const response = await DbOperations.findOne(locationSchema,criteria, {}, {} );
+                if(!response) {
+                    throw({status:400, message:'No location found.'})
+                }
+                io.sockets
+                    .to(`room_${userData.id}`)
+                    .emit("location-open", {
+                        clientId: userData.id,
+                        locationId: userData.locationId,
+                        isOpen: payloadData.isOpen
+                    });
+                const updateResponse = await DbOperations.findAndUpdate(locationSchema,criteria,QuerypayLoad, {new: true});                
+                return resolve(updateResponse);
+            } catch (err) {
+                return reject(err);
+            }
+        })
+        
+    }
+    static async scheduleInformation(payloadData ,userData) {
+        return new Promise(async(resolve,reject)=> {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                const criteria = {_id: mongoose.Types.ObjectId(userData.locationId)};
+                const QuerypayLoad ={ 
+                    isScheduleOpen: payloadData.isScheduleOpen,
+                    selectedTimeZone: payloadData.selectedTimeZone,
+                    openingTime: payloadData.openingTime,
+                    closingTime: payloadData.closingTime,
+                }
                 const response = await DbOperations.findOne(locationSchema,criteria, {}, {} );
                 if(!response) {
                     throw({status:400, message:'No location found.'})

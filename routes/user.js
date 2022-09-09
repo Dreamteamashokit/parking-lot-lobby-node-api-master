@@ -144,6 +144,17 @@ router.post('/updateBusinessInformation',upload.single('avatar'), async (req,res
     res.status(statusCode).send({status:false,statusCode:statusCode, message :message , data:err})
   }
 })
+router.post('/scheduleInformation', async (req,res, next) => {
+  try {
+    await UserController.scheduleInformation(req.body, req.userData);
+    let response = await UserController.settings(req.userData);
+    return res.status(200).send({status:true, message: commonFunctions.getSuccessMessage('PUT') ,  data:response})
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({status:false,statusCode:statusCode, message :message , data:err})
+  }
+})
 router.post('/updateAlertSettings', async (req,res, next) => {
   try {
     let response = await UserController.updateAlertSettings(req.body, req.userData)
