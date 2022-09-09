@@ -968,7 +968,7 @@ class UserController {
         return new Promise(async(resolve,reject)=> {
             try {
                 await commonFunctions.checkUserInformation(userData);
-                const criteria = {_id:userData.locationId};
+                const criteria = {_id: mongoose.Types.ObjectId(userData.locationId)};
                 const QuerypayLoad ={ 
                     isScheduleOpen: payloadData.isScheduleOpen,
                     selectedTimeZone: payloadData.selectedTimeZone,
