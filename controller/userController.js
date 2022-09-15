@@ -360,6 +360,7 @@ class UserController {
                         is_delayed:(payloadData.desktopAdditional.is_delayed) ? payloadData.desktopAdditional.is_delayed : false,
                     },
                     inforClientPositionLine:(payloadData.inforClientPositionLine) ? payloadData.inforClientPositionLine : false,
+                    clientIncomplete:(payloadData.clientIncomplete) ? payloadData.clientIncomplete : false,
                     statusSetting: {
                         isSendStatus:(payloadData.statusSetting.isSendStatus) ? payloadData.statusSetting.isSendStatus : false,
                         sendStatusTime: (payloadData.statusSetting.sendStatusTime) ? payloadData.statusSetting.sendStatusTime : 0
@@ -705,11 +706,19 @@ class UserController {
                     let {start,end} = await commonFunctions.getformatedStartEndDay(visitDate2); 
                     visitDate ={ $gte: new Date(start), $lte: new Date(end)} ;
                 } 
-                console.log("visitDate", visitDate);
-                const queryPayload = {
+                const settings = await DbOperations.findOne(
+                    settingSchema,
+                    { clinicId: userData.id },
+                    { clientIncomplete: 1 },
+                    {}
+                  );
+                let queryPayload = {
                     clinicId :  mongoose.Types.ObjectId(userData.id),
                     locationId: mongoose.Types.ObjectId(userData.locationId),
                     visitDate:visitDate                    
+                }
+                if(!settings.clientIncomplete) {
+                    queryPayload['submissionID'] = { $ne: null }
                 }
                 if(payloadData.filterStatus) {
                   //'Waiting':1,'check-In/out:2,'Served':3,'Blocked:4,'Delay'5
