@@ -863,11 +863,49 @@ async function checkRequestedMessage(
           delete clinicPayload.visitDate;
           if (!existClinicPatient) {
             clinicPayload["visitDate"] = new Date();
-            const savedRecord = await DbOperations.saveData(
+            let savedRecord = await DbOperations.saveData(
               ClinicPatient,
               clinicPayload
             );
-            logger.dump({path: 'twillio route: 870', body: clinicPayload})
+            logger.dump({path: 'twillio controller: 870', body: clinicPayload})
+            savedRecord = await DbOperations.findOne(
+              ClinicPatient,
+              { _id: savedRecord._id },
+              {},
+              { lean: true }
+            );
+            logger.dump({path: 'twillio controller: 877', body: savedRecord})
+            if(!savedRecord) {
+              logger.dump({path: 'twillio controller: 879', body: savedRecord})
+              try {
+                savedRecord = await new Promise((resolve, reject) => {
+                  const record = new ClinicPatient(clinicPayload);
+                  record.save(function (err, el) {
+                    if (err) return reject(err);
+                    resolve(el)
+                  });
+                })
+              } catch (error) {
+                logger.error({path: 'twillio controller: 887', error});
+                return resolve({
+                  reply: commonFunctions.getReplyMessage("no_respond"),
+                  isUpdate: false,
+                });
+              }
+              savedRecord = await DbOperations.findOne(
+                ClinicPatient,
+                { _id: savedRecord._id },
+                {},
+                { lean: true }
+              );
+            }
+            if(!savedRecord) {
+              logger.error({path: 'twillio controller: 902', error});
+              return resolve({
+                reply: commonFunctions.getReplyMessage("no_respond"),
+                isUpdate: false,
+              });
+            }
             // here we will add field with url and send due to hippa security on edit
             const responseJotFormUrl = await jotFormSubmit(
               locationId,
@@ -915,7 +953,7 @@ async function checkRequestedMessage(
         }
       }
     } catch (err) {
-      logger.error({path: 'twillio controller 916', error: err.message || err})
+      logger.error({path: 'twillio controller 941', error: err.message || err})
       console.log("\n err:", err);
       return resolve({
         reply: commonFunctions.getReplyMessage("no_match"),
