@@ -416,6 +416,30 @@ class TwilioController {
             return reject({
               message: "No clientPatientid Found into jotform response.",
             });
+
+          const isResubmit = await DbOperations.findOne(
+            ClinicPatient,
+            {
+              _id: clientPatientId,
+              submissionID: { $ne: null },
+            },
+            {},
+            { lean: true }
+          );
+          if (isResubmit) {
+            const user = await DbOperations.findOne(User, { _id: isResubmit.patientId }, {}, { lean: true });
+            const location = await DbOperations.findOne(locationSchema, { _id: isResubmit.locationId }, {}, { lean: true });
+            const sendPayload = {
+              to: user.fullNumber,
+              from: location.twilioNumber,
+              body: `Your link is expired, please get new link by sending "Arrived" sms.`,
+            };
+            await commonFunctions.sendTwilioMessage(sendPayload);
+            return reject({
+              message: "Resubmission jotform.",
+            });
+          }
+
           const clientPatientData = await DbOperations.findOne(
             ClinicPatient,
             { _id: clientPatientId },
@@ -798,6 +822,7 @@ async function checkRequestedMessage(
             locationId: locationId,
             clinicId: clinicId,
             patientId: patientData._id,
+            submissionID: null,
             visitDate: { $gte: new Date(start), $lte: new Date(end) },
             inQueue: true,
           };
@@ -966,11 +991,13 @@ async function checkRequestedMessage(
 async function jotFormSubmit(locationId, patientId, JotFormId, fullNumber) {
   return new Promise(async (resolve, reject) => {
     try {
-      const encodedPatientNumber = encodeURIComponent("phoneNumber"),
-        encodedLocationId = encodeURIComponent("location_id"),
-        encodedClientPatientId = encodeURIComponent("clientPatientId");
+      // const encodedPatientNumber = encodeURIComponent("phoneNumber"),
+      //   encodedLocationId = encodeURIComponent("location_id"),
+      //   encodedClientPatientId = encodeURIComponent("clientPatientId");
 
-      const jotFormUrl = `${process.env.HIPPA_JOT_URL}/${JotFormId}?${encodedPatientNumber}=${fullNumber}&${encodedLocationId}=${locationId}&${encodedClientPatientId}=${patientId}`;
+      // const jotFormUrl = `${process.env.HIPPA_JOT_URL}/${JotFormId}?${encodedPatientNumber}=${fullNumber}&${encodedLocationId}=${locationId}&${encodedClientPatientId}=${patientId}`;
+      const host = process.env.API_URL || 'https://api.parkinglotlobby.com';
+      const jotFormUrl = `${host}/jotform/${patientId}`;
       logger.dump({path: 'twillio controller: 934', jotFormUrl})
       const { status, message, short_response } =
         await commonFunctions.shorterUrl(jotFormUrl);

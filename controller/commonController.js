@@ -1885,8 +1885,8 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
           const fname = el?.ans.split('/').pop().split('.')[0];
           html += `<span class="p-btn p-btn-d">
                       <a href="${el?.ans}" download="${fname}.png" >PNG</a>
-                      <a href="https://testapi.parkinglotlobby.com/common/download/jpg?url=${el?.ans}" download="${fname}.jpg" >JPG</a>
-                      <a href="https://testapi.parkinglotlobby.com/common/download/bmp?url=${el?.ans}" download="${fname}.bmp" >BMP</a>
+                      <a href="https://api.parkinglotlobby.com/common/download/jpg?url=${el?.ans}" download="${fname}.jpg" >JPG</a>
+                      <a href="https://api.parkinglotlobby.com/common/download/bmp?url=${el?.ans}" download="${fname}.bmp" >BMP</a>
                   </span>`;
         } else if(isPreview) {
           html += `<span class="p-btn p-pointer" onclick="copyData(this)"><i class="gg-copy"></i></span>`;

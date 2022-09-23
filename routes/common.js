@@ -1,12 +1,52 @@
 import express from 'express';
 var router = express.Router();
 import jimp from "jimp";
-import {commonFunctions} from '../services';
+import {commonFunctions, DbOperations } from '../services';
 import {CommonController} from '../controller';
+import { ClinicPatient, User } from "../models";
 
 router.get('/',async (req,res) => {
   try {
     return res.status(200).end('Common Route....')
+  } catch (err) {
+    let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
+    return res.status(500).send({status:false, message:message})
+  }
+})
+
+router.get('/test',async (req,res) => {
+  try {
+    const data = await DbOperations.findAll(
+      ClinicPatient,
+      { 
+        // createdAt: {
+        //   '$gte': new Date(2022, 9, 06),
+        //   '$lte': new Date(2022, 9, 09)
+        // }
+      },
+      {},
+      {}
+    );
+    return res.status(200).send({data})
+  } catch (err) {
+    let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
+    return res.status(500).send({status:false, message:message})
+  }
+})
+router.get('/test2',async (req,res) => {
+  try {
+    const data = await DbOperations.findAll(
+      User,
+      { 
+        // createdAt: {
+        //   '$gte': new Date(2022, 9, 06),
+        //   '$lte': new Date(2022, 9, 09)
+        // }
+      },
+      {},
+      {}
+    );
+    return res.status(200).send({data})
   } catch (err) {
     let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
     return res.status(500).send({status:false, message:message})
