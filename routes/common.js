@@ -1,6 +1,7 @@
 import express from 'express';
 var router = express.Router();
 import jimp from "jimp";
+import axios from "axios";
 import {commonFunctions, DbOperations } from '../services';
 import {CommonController} from '../controller';
 import { ClinicPatient, User } from "../models";
@@ -61,10 +62,14 @@ router.get('/download/:type',async (req,res) => {
       case 'bmp': mime = jimp.MIME_BMP; break;
       default: mime = jimp.MIME_PNG
     }
-    let image = await jimp.read(req.query.url);
+    const { data } = await axios.get(req.query.url, { params: { apiKey: process.env.JOT_FORM_KEY }, responseType: 'arraybuffer' })
     res.set('Content-Type', mime);
     res.set('Content-Disposition', `attachment; filename="${fileName}"`,);
-    return res.send(await image.getBufferAsync(jimp.MIME_JPEG))
+    if (mime === jimp.MIME_PNG) {
+      return res.send(data)
+    }
+    let image = await jimp.read(data);
+    return res.send(await image.getBufferAsync(mime))
   } catch (err) {
     let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
     return res.status(500).send({status:false, message:message})
@@ -330,7 +335,8 @@ router.get('/fetchFormUploads', async(req,res) => {
   try {
     await commonFunctions.verifyLocationId(req.userData);
     const response = await CommonController.fetchFormUploads(req.query,req.userData)
-    return res.status(200).send({status:true, message: 'fetch form uploads successfully' ,  data:response})
+    const data = response.map(res => `${process.env.API_URL}/common/download/png?url=${encodeURIComponent(res)}`)
+    return res.status(200).send({status:true, message: 'fetch form uploads successfully' ,  data})
   } catch (err) {
     let actualMessage =(err && err.message) ? err.message : commonFunctions.getErrorMessage('somethingWrongElse');
     let message = commonFunctions.getErrorMessage('somethingWrong') ; 
