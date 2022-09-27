@@ -407,7 +407,10 @@ const scheduleClinicOpening = function () {
     try {
       const clinicLocationsData = await DBoperations.findAll(locationSchema, {
           isActive: true,
-          isScheduleOpen: true,
+          $or: [
+            { isScheduleOpen: true },
+            { isScheduleClose: true },
+          ],
         },
         {},
         {}
@@ -426,10 +429,10 @@ const scheduleClinicOpening = function () {
             });
       }
       for (const clinic of clinicLocationsData) {
-        if(isDateMatch(clinic.openingTime, clinic.selectedTimeZone.offset)) {
+        if(clinic.isScheduleOpen && isDateMatch(clinic.openingTime, clinic.selectedTimeZone.offset)) {
           emitOpening(clinic, true);
           await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: true}, {});
-        } else if(isDateMatch(clinic.closingTime, clinic.selectedTimeZone.offset)) {
+        } else if(clinic.isScheduleClose && isDateMatch(clinic.closingTime, clinic.selectedTimeZone.offset)) {
           emitOpening(clinic, false);
           await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: false}, {});
         }

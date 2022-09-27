@@ -7,6 +7,7 @@ var locationSchema = Schema({
     jotformId:{type:Schema.Types.ObjectId,ref:'jotform'},
     isOpen:{type:Boolean, default:false},
     isScheduleOpen:{type:Boolean, default:false},
+    isScheduleClose:{type:Boolean, default:false},
     selectedTimeZone:{type: {
         name: String,
         value: String,

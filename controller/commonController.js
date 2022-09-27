@@ -400,6 +400,7 @@ class CommonController {
         };
         const updatePayload = {
           inQueue: false,
+          isCheckOut: false,
           isCheckIn: true,
           checkIn: new Date(),
         };
