@@ -56,6 +56,7 @@ var settingSchema = Schema({
         is_delayed:{type:Boolean, default:true},
     },
     inforClientPositionLine:{type:Boolean, default:true},
+    clientIncomplete:{type:Boolean, default:false},
     stylingScreen:{type:Boolean, default:false},
     clientInformation:{
         name:{type:Boolean, default:true},

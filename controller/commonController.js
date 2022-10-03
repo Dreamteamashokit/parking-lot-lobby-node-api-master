@@ -1880,13 +1880,14 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
         html += `<div class="p-row">`;
         html += `<span class="p-col-4">${el.text}</span>`;
         html += `<span class="p-col-8 ${isPreview ? 'p-pr-35' : ''}">
-                  ${el?.isLink ? '<img class="p-img" src="' + el?.ans + '" alt="' + el?.name + '" />' : el?.ans}`;
+                  ${el?.isLink ? '<img class="p-img" src="' + process.env.API_URL + '/common/download/png?url=' + encodeURIComponent(el?.ans) + '" alt="' + el?.name + '" />' : el?.ans}`;
         if(isPreview && el?.isLink) {
           const fname = el?.ans.split('/').pop().split('.')[0];
+          const link = encodeURIComponent(el?.ans);
           html += `<span class="p-btn p-btn-d">
-                      <a href="${el?.ans}" download="${fname}.png" >PNG</a>
-                      <a href="https://testapi.parkinglotlobby.com/common/download/jpg?url=${el?.ans}" download="${fname}.jpg" >JPG</a>
-                      <a href="https://testapi.parkinglotlobby.com/common/download/bmp?url=${el?.ans}" download="${fname}.bmp" >BMP</a>
+                      <a href="${process.env.API_URL}/common/download/png?url=${link}" download="${fname}.png" >PNG</a>
+                      <a href="${process.env.API_URL}/common/download/jpg?url=${link}" download="${fname}.jpg" >JPG</a>
+                      <a href="${process.env.API_URL}/common/download/bmp?url=${link}" download="${fname}.bmp" >BMP</a>
                   </span>`;
         } else if(isPreview) {
           html += `<span class="p-btn p-pointer" onclick="copyData(this)"><i class="gg-copy"></i></span>`;

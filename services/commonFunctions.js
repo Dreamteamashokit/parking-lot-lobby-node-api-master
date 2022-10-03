@@ -85,6 +85,7 @@ const verifyToken = async function (token) {
 const getReplyMessage = (type, count = 0, totalCount = 0, businessName = '', userName = '', timer = 0, jotformUrl = '') => {
     try {
         const replyMessages = {
+            no_respond: "We are experiencing a problem with our system. Please retry in a few minutes.",
             help: 'Keywords available: "Cancel Appointment" to cancel your place in line, DELAY to notify you will be late, ARRIVED to notify arrival, BLOCK to block, UNBLOCK to unblock, CHANGE to change your name, STATUS for most updated line position',
             change: 'Please text us your first and last name (e.g. Jane Doe).',
             block: `Your number has been blocked for further SMS from ${businessName}. Reply UNBLOCK to unblock it.`,
