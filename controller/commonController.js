@@ -166,6 +166,7 @@ class CommonController {
               isCheckIn: false,
               isCheckOut: false,
               is_block: false,
+              is_delete: { $ne: true }
             };
             break;
           case 2:
@@ -177,6 +178,7 @@ class CommonController {
               isCheckIn: true,
               isCheckOut: false,
               is_block: false,
+              is_delete: { $ne: true }
             };
             break;
           case 3:
@@ -188,6 +190,7 @@ class CommonController {
               isCheckIn: false,
               isCheckOut: true,
               is_block: false,
+              is_delete: { $ne: true }
             };
             break;
           default:
@@ -316,7 +319,7 @@ class CommonController {
           aggregate
         );
         for (const p of existClinicPatient) {
-          p['isExisting'] = (await DbOperations.count(ClinicPatient, {patientId: p.patientId._id})) > 1;
+          p['isExisting'] = (await DbOperations.count(ClinicPatient, { patientId: p.patientId._id })) > 1;
         }
         //const existClinicPatient = await DbOperations.getData(ClinicPatient,queryPayload, {}, {lean: true}, populateQuery);
         return resolve(existClinicPatient);
@@ -796,31 +799,39 @@ class CommonController {
               { _id: payloadData.id },
               { isChangeNameRequest: false, isParkingSpotRequest: false }
             ),
-            DbOperations.findAndRemove(ClinicPatient, {
+            DbOperations.findAndUpdate(ClinicPatient, {
               patientId: payloadData.id,
               locationId: userData.locationId,
               clinicId: userData.id,
               visitDate: { $gte: new Date(start), $lte: new Date(end) },
+            }, 
+            {
+              is_delete: true,
             }),
           ]);
         } else if (bodyPayload.deleteType === 2) {
           await Promise.all([
-            DbOperations.deleteMany(Message, {
-              patientId: payloadData.id,
-              locationId: userData.locationId,
-            }),
-            DbOperations.findAndRemove(User, { _id: payloadData.id }),
-            DbOperations.deleteMany(ClinicPatient, {
+            // DbOperations.deleteMany(Message, {
+            //   patientId: payloadData.id,
+            //   locationId: userData.locationId,
+            // }),
+            // DbOperations.findAndRemove(User, { _id: payloadData.id }),
+            DbOperations.updateMany(ClinicPatient, {
               patientId: payloadData.id,
               locationId: userData.locationId,
               clinicId: userData.id,
+            },
+            {
+              is_delete: true,
             }),
           ]);
         } else if (bodyPayload.deleteType === 3) {
-          await DbOperations.findAndRemove(ClinicPatient, {
+          await DbOperations.findAndUpdate(ClinicPatient, {
             _id: payloadData.id,
             locationId: userData.locationId,
             clinicId: userData.id,
+          }, {
+            is_delete: true,
           });
         }
         io.sockets
@@ -1845,12 +1856,28 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
             "Sorry we can to able to find submission detail from jotfrom.",
         };
       }
-      let fontColor = "color: #0a1551;";
+      const prettyFormat = (ans) => {
+        const labels = JSON.parse(ans.sublabels);
+        const answer = ans.answer;
+        let pretty = '<table>'
+        for (const key in labels) {
+          if (labels[key] && answer[key]) {
+            pretty += `<tr>
+              <td>${labels[key]}</td>
+              <td>${answer[key]}</td>
+              <td><i class="gg-copy gg-sm1" onclick='copyMe("${encodeURIComponent(answer[key])}")'></i></td>
+              </tr>`;
+          }
+        }
+        pretty += '</table>'
+        return pretty;
+      }
       let answers = [];
       for (const key in response.answers) {
         let ans = response.answers[key];
         if (ans?.answer !== undefined) {
-          ans['ans'] = ans?.prettyFormat || ans?.answer;
+          ans.prettyFormat = ans?.sublabels ? prettyFormat(ans) : ans.prettyFormat;
+          ans['ans'] = ans?.type === 'control_fileupload' ? ans?.answer[0] : (ans?.prettyFormat || ans?.answer);
           ans['isLink'] = isValidHttpUrl(ans['ans'])
           answers.push(ans)
         }
@@ -1864,7 +1891,7 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
                         td { vertical-align: middle; }
                         .p-col-4 {float:left;height: auto;margin-left: 10px;width:40%;font-size: 14px;font-weight: 600; color: #060b33; padding: 5px 0}
                         .p-col-8 {float:right;margin-left: 11px;width:55%;font-size: 12px;text-align: left; color: #4c5163; padding: 5px 0; position: relative}
-                        .p-col-8 td { font-size: 12px }
+                        .p-col-8 td { font-size: 12px; padding-right: 8px }
                         .p-col-8 td:first-child { font-weight: 500; color: #060b33}
                         .p-col-8 td:last-child { color: #4c5163}
                         .p-btn { position: absolute; right: 30px; top: 0}
@@ -1872,6 +1899,7 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
                         .p-btn-d > a { background: #4c5163; color: #fff; padding: 1px 6px; border-radius: 5px; cursor: pointer }
                         .p-pointer {cursor: pointer}
                         .p-pr-35 { padding-right: 35px }
+                        .gg-sm1 { cursor: pointer; transform: scale(0.5); margin-left: 4px; }
                         </style></head><body style="font-family: Circular,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;">`;
       html += `<div class="p-row">
                         <span class="p-col-4">Submission Date</span>
@@ -1880,23 +1908,33 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
       for (let el of answers) {
         html += `<div class="p-row">`;
         html += `<span class="p-col-4">${el.text}</span>`;
-        html += `<span class="p-col-8 ${isPreview ? 'p-pr-35' : ''}">
-                  ${el?.isLink ? '<img class="p-img" src="' + process.env.API_URL + '/common/download/png?url=' + encodeURIComponent(el?.ans) + '" alt="' + el?.name + '" />' : el?.ans}`;
-        if(isPreview && el?.isLink) {
+        html += `<span class="p-col-8 ${isPreview ? 'p-pr-35' : ''}">`;
+
+
+        if (isPreview) {
+          html += `${el?.isLink ? '<img class="p-img" src="' + process.env.FILE_PROXY_URL + '/common/download/png?url=' + encodeURIComponent(el?.ans) + '" alt="' + el?.name + '" />' : el?.ans}`;
+        } else {
+          if (el?.isLink) {
+            html += `<img class="p-img" src="${el?.ans + '?apiKey=' + process.env.JOT_FORM_KEY}" />`
+          } else {
+            html += el?.ans;
+          }
+        }
+        if (isPreview && el?.isLink) {
           const fname = el?.ans.split('/').pop().split('.')[0];
           const link = encodeURIComponent(el?.ans);
           html += `<span class="p-btn p-btn-d">
-                      <a href="${process.env.API_URL}/common/download/png?url=${link}" download="${fname}.png" >PNG</a>
-                      <a href="${process.env.API_URL}/common/download/jpg?url=${link}" download="${fname}.jpg" >JPG</a>
-                      <a href="${process.env.API_URL}/common/download/bmp?url=${link}" download="${fname}.bmp" >BMP</a>
+                      <a href="${process.env.FILE_PROXY_URL}/common/download/png?url=${link}" download="${fname}.png" >PNG</a>
+                      <a href="${process.env.FILE_PROXY_URL}/common/download/jpg?url=${link}" download="${fname}.jpg" >JPG</a>
+                      <a href="${process.env.FILE_PROXY_URL}/common/download/bmp?url=${link}" download="${fname}.bmp" >BMP</a>
                   </span>`;
-        } else if(isPreview) {
+        } else if (isPreview) {
           html += `<span class="p-btn p-pointer" onclick="copyData(this)"><i class="gg-copy"></i></span>`;
         }
         html += `</span></div>`;
       }
       html += `</body></html>`;
-      if(isPreview) {
+      if (isPreview) {
         return resolve(html);
       }
       const saveResponse = await commonFunctions.saveToPdfFile(

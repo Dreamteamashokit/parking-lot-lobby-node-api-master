@@ -411,6 +411,15 @@ class TwilioController {
               false
             );
           }
+          await DbOperations.findAndUpdate(
+            ClinicPatient,
+            {
+              _id: parentPatientId,
+            },
+            {
+              uploadNotify: true,
+            }
+          )
         } else {
           if (!clientPatientId)
             return reject({
@@ -919,7 +928,7 @@ async function checkRequestedMessage(
               }
               savedRecord = await DbOperations.findOne(
                 ClinicPatient,
-                { _id: savedRecord._id },
+                { _id: savedRecord._id , is_delete: { $ne: true } },
                 {},
                 { lean: true }
               );
@@ -1035,6 +1044,7 @@ async function updatePatientStatus(locationId, patientDataId) {
         isCheckIn: false,
         isCheckOut: false,
         is_block: false,
+        is_delete: { $ne: true },
       };
       let aggregate = [
         { $match: queryPayload },

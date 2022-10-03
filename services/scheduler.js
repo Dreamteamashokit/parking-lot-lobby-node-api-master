@@ -28,6 +28,7 @@ const checkAndNotifyPatient = function () {
         notifyTime: { $exists: true },
         visitDate: { $gte: new Date(start), $lte: new Date(end) },
         clientSmsNotify: false,
+        is_delete: { $ne: true },
       };
       const populateQuery = [
         {
@@ -206,6 +207,7 @@ const checkPaperworkAndReminder = function () {
         isCheckOut: false,
         visitDate: { $gte: new Date(start), $lte: new Date(end) },
         submitPaperWork: false,
+        is_delete: { $ne: true },
         paperworkNotify: false,
       };
       const populateQuery = [
@@ -307,6 +309,7 @@ const checkProvidernotAtDesk = function () {
           locationId: { $in: locationIds },
           inQueue: true,
           clinicOffNotify: false,
+          is_delete: { $ne: true },
           visitDate: { $gte: new Date(start), $lte: new Date(end) },
         });
         if (patientFortheDay && patientFortheDay.length > 0) {
@@ -689,6 +692,7 @@ async function fetchLocationPatientAndSendStatus(singleClinicSetting) {
                 isCheckIn: false,
                 isCheckOut: false,
                 is_block: false,
+                is_delete: { $ne: true },
               };
               let aggregate = [
                 { $match: queryPayload },
