@@ -418,8 +418,8 @@ const scheduleClinicOpening = function () {
         {},
         {}
       );
-      const isDateMatch = (scheduleTime, offset) => {
-        const currentTime = moment().utcOffset(offset).format('HH:mm');
+      const isDateMatch = (scheduleTime, timezone) => {
+        const currentTime = moment().tz(timezone).format('HH:mm');
         return scheduleTime === currentTime
       }
       const emitOpening = (clinic, isOpen) => {
@@ -432,10 +432,10 @@ const scheduleClinicOpening = function () {
             });
       }
       for (const clinic of clinicLocationsData) {
-        if(clinic.isScheduleOpen && isDateMatch(clinic.openingTime, clinic.selectedTimeZone.offset)) {
+        if(clinic.isScheduleOpen && isDateMatch(clinic.openingTime, clinic.selectedTimeZone.value)) {
           emitOpening(clinic, true);
           await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: true}, {});
-        } else if(clinic.isScheduleClose && isDateMatch(clinic.closingTime, clinic.selectedTimeZone.offset)) {
+        } else if(clinic.isScheduleClose && isDateMatch(clinic.closingTime, clinic.selectedTimeZone.value)) {
           emitOpening(clinic, false);
           await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: false}, {});
         }
