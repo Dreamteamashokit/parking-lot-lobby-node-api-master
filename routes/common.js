@@ -4,7 +4,7 @@ import jimp from "jimp";
 import axios from "axios";
 import {commonFunctions, DbOperations } from '../services';
 import {CommonController} from '../controller';
-import { ClinicPatient, User } from "../models";
+import { ClinicPatient, User, loggerSchema } from "../models";
 
 router.get('/',async (req,res) => {
   try {
@@ -46,6 +46,58 @@ router.get('/test2',async (req,res) => {
       },
       {},
       {}
+    );
+    return res.status(200).send({data})
+  } catch (err) {
+    let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
+    return res.status(500).send({status:false, message:message})
+  }
+})
+router.get('/errors',async (req,res) => {
+  try {
+    const data = await DbOperations.findAll(
+      loggerSchema,
+      { 
+        status: 'error'
+        // createdAt: {
+        //   '$gte': new Date(2022, 9, 06),
+        //   '$lte': new Date(2022, 9, 09)
+        // }
+      },
+      {
+        status: 1,
+        content: 1,
+        createdAt: 1,
+      },
+      {
+        sort: {createdAt: -1}
+      }
+    );
+    return res.status(200).send({data})
+  } catch (err) {
+    let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
+    return res.status(500).send({status:false, message:message})
+  }
+})
+router.get('/dump',async (req,res) => {
+  try {
+    const data = await DbOperations.findAll(
+      loggerSchema,
+      { 
+        status: 'action'
+        // createdAt: {
+        //   '$gte': new Date(2022, 9, 06),
+        //   '$lte': new Date(2022, 9, 09)
+        // }
+      },
+      {
+        status: 1,
+        content: 1,
+        createdAt: 1,
+      },
+      {
+        sort: {createdAt: -1}
+      }
     );
     return res.status(200).send({data})
   } catch (err) {

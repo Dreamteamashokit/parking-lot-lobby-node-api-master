@@ -346,7 +346,6 @@ const checkProvidernotAtDesk = function () {
                     new Date(patientFortheDay[j].inQueueAt),
                     new Date()
                   );
-                  console.log("diffenceFromCurrent:", diffenceFromCurrent);
                   if (diffenceFromCurrent > companySettings.certainTime) {
                     const clinicLocationData = await DBoperations.findOne(
                       locationSchema,
@@ -361,7 +360,6 @@ const checkProvidernotAtDesk = function () {
                           from: clinicLocationData.twilioNumber,
                           body: companySettings.message,
                         };
-                        console.log("sendPayload:", sendPayload);
                         await commonFunctions.sendTwilioMessage(sendPayload);
                         await commonFunctions.updateMessage(
                           patientFortheDay[j].locationId,
@@ -443,7 +441,6 @@ const scheduleClinicOpening = function () {
 const sendStatusToPatients = function () {
   return cron.schedule("* * * * *", async () => {
     try {
-      console.log("\n==== cron start====\n");
       const clinicSettings = await DBoperations.findAll(
         settingSchema,
         {},
@@ -470,7 +467,6 @@ const sendStatusToPatients = function () {
           singleClinicSetting &&
           singleClinicSetting.lastPatientStatusUpdate
         ) {
-          console.log("\n when lastPatientStatusUpdate found...");
           await fetchLocationPatientAndSendStatus(singleClinicSetting);
         }
       }
@@ -646,12 +642,6 @@ async function fetchLocationPatientAndSendStatus(singleClinicSetting) {
         const compareTime = singleClinicSetting.statusSetting.sendStatusTime
           ? parseInt(singleClinicSetting.statusSetting.sendStatusTime)
           : 0;
-        console.log(
-          "\n diffenceFromCurrent:",
-          diffenceFromCurrent,
-          "\n compareTime:",
-          compareTime
-        );
         if (diffenceFromCurrent > compareTime) {
           await DBoperations.findAndUpdate(
             settingSchema,
@@ -731,7 +721,6 @@ async function fetchLocationPatientAndSendStatus(singleClinicSetting) {
                       from: singleLocation.twilioNumber,
                       body: statusMessage,
                     };
-                    console.log("\n sendPayload:", sendPayload);
                     await commonFunctions.sendTwilioMessage(sendPayload);
                     await commonFunctions.updateMessage(
                       singleLocation._id,

@@ -57,7 +57,7 @@ class TwilioController {
             createdAt: { $gte: new Date(updatedDate) },
           };
           const lastMessage = await DbOperations.count(Message, messageQuery);
-          console.log("\n lastMessage:", lastMessage);
+          // console.log("\n lastMessage:", lastMessage);
           await commonFunctions.updateMessage(
             locationExist._id,
             locationExist.clinicId,
@@ -102,7 +102,7 @@ class TwilioController {
             createdAt: { $gte: new Date(updatedDate) },
           };
           const lastMessage = await DbOperations.count(Message, messageQuery);
-          console.log("\n else lastMessage:", lastMessage);
+          // console.log("\n else lastMessage:", lastMessage);
           await commonFunctions.updateMessage(
             locationExist._id,
             locationExist.clinicId,
@@ -141,7 +141,7 @@ class TwilioController {
           return resolve(reply);
         }
       } catch (err) {
-        console.log("\n error in sms:", err.message || err);
+        console.log("\n error in sms:", err);
         return reject(err);
       }
     });
@@ -210,7 +210,7 @@ class TwilioController {
           return resolve(response);
         }
       } catch (err) {
-        console.log("\n error in controller:", err.message || err);
+        console.log("\n error in controller:", err);
         return reject(err);
       }
     });
@@ -513,7 +513,7 @@ class TwilioController {
               from: clinicLocationData.twilioNumber,
               body: sendMessage,
             };
-            console.log("\n on submit 1st jotform..", sendMessage);
+            // console.log("\n on submit 1st jotform..", sendMessage);
             await Promise.all([
               commonFunctions.sendTwilioMessage(sendPayload),
               commonFunctions.updateMessage(
@@ -568,6 +568,7 @@ class TwilioController {
         //}
         return resolve(true);
       } catch (error) {
+        console.log(error);
         logger.error({path: 'twillio controller 547', error: error.message || error})
         if (error.name === "MongoError" && error.code === 11000) {
           return reject(
@@ -838,14 +839,16 @@ async function checkRequestedMessage(
               {},
               { lean: true }
             ),
-            DbOperations.findOne(
-              ClinicPatient,
-              clinicQuery,
-              {},
-              { lean: true }
-            ),
+            null,
+            // DbOperations.findOne(
+            //   ClinicPatient,
+            //   clinicQuery,
+            //   {},
+            //   { lean: true }
+            // ),
             commonFunctions.fetchJotformId(locationId),
-            DbOperations.findOne(Message, messageQuery),
+            null,
+            // DbOperations.findOne(Message, messageQuery),
           ]);
           if (!clinicLocationData) {
             throw new Error(commonFunctions.getErrorMessage("clinicNotFound"));
@@ -911,6 +914,7 @@ async function checkRequestedMessage(
                   });
                 })
               } catch (error) {
+                console.log("\n err:", err);
                 logger.error({path: 'twillio controller: 887', error});
                 return resolve({
                   reply: commonFunctions.getReplyMessage("no_respond"),
@@ -939,7 +943,7 @@ async function checkRequestedMessage(
               patientData.fullNumber
             );
             let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
-            console.log("\n sendMessage:", sendMessage);
+            // console.log("\n sendMessage:", sendMessage);
             return resolve({
               reply: sendMessage,
               isUpdate: true,
@@ -959,7 +963,7 @@ async function checkRequestedMessage(
               patientData.fullNumber
             );
             let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form (note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
-            console.log("\n sendMessage:", sendMessage);
+            // console.log("\n sendMessage:", sendMessage);
             return resolve({
               reply: sendMessage,
               isUpdate: true,
@@ -1002,10 +1006,10 @@ async function jotFormSubmit(locationId, patientId, JotFormId, fullNumber) {
       const { status, message, short_response } =
         await commonFunctions.shorterUrl(jotFormUrl);
       if (!status) {
-        console.log("when bitly no status:", message);
+        // console.log("when bitly no status:", message);
         return resolve(encodeURI(jotFormUrl));
       }
-      console.log("\n\n when bitly status :", short_response);
+      // console.log("\n\n when bitly status :", short_response);
       const short_url =
         short_response && short_response.link
           ? short_response.link
@@ -1013,7 +1017,7 @@ async function jotFormSubmit(locationId, patientId, JotFormId, fullNumber) {
       return resolve(encodeURI(short_url));
     } catch (err) {
       logger.error({path: 'twillio controller 946', jotFormUrl, error: err.message || err})
-      console.log("\n twilio jotform err:", err.message || err);
+      console.log("\n twilio jotform err:", err);
       return reject(err);
     }
   });
@@ -1084,6 +1088,7 @@ async function updatePatientStatus(locationId, patientDataId) {
       }
       return resolve({ status: true, message: message });
     } catch (e) {
+      console.log("\n err:", err);
       return resolve({ status: false, message: message });
     }
   });

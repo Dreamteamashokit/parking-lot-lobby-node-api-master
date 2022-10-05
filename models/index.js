@@ -7,6 +7,7 @@ import location from './location';
 import review from './reviews';
 import jotformSchema from './jotform';
 import subPatientSchema from './subPatient';
+import loggerSchema from './logger';
 module.exports = {
     User:User,
     Message:Message,
@@ -16,5 +17,6 @@ module.exports = {
     locationSchema:location,
     reviewSchema:review,
     jotformSchema,
+    loggerSchema,
     SubPatientSchema: subPatientSchema
 }

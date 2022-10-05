@@ -1,3 +1,4 @@
+import { loggerSchema } from '../models';
 // import  *  as  winston  from  'winston';
 // import  'winston-daily-rotate-file';
 
@@ -42,13 +43,31 @@
 // const logger = winston.createLogger(logConfiguration);
 // const logger2 = winston.createLogger(logConfiguration2);
 
+const logger = new loggerSchema({
+    status: 'info',
+    content: 'restarted'
+})
+logger.save(() => {
+    
+});
 
 module.exports = {
-    error: (message) => {
-        // message = typeof message === 'string' ? message : JSON.stringify({ message })
+    error: async (message) => {
+        const content = typeof message === 'string' ? message : JSON.stringify({ message })
+        const logger = new loggerSchema({
+            status: 'error',
+            content
+        })
+        await logger.save();
         // logger.error(message)
     },
-    dump: (message) => {
+    dump: async (message) => {
+        const content = typeof message === 'string' ? message : JSON.stringify({ message })
+        const logger = new loggerSchema({
+            status: 'action',
+            content
+        })
+        await logger.save();
         // message = typeof message === 'string' ? message : JSON.stringify({ message })
         // logger2.info(message)
     },
