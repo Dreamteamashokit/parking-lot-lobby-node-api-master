@@ -330,6 +330,7 @@ const getCountForWaitingList = (clinicId = null, patientId = null, locationId = 
                 visitDate: { $gte: new Date(start), $lte: new Date(end) },
                 is_block: false,
                 isCancel: false,
+                is_delete: { $ne: true },
                 inQueue: true
             }
             const existClinicPatient = await DBoperations.getData(ClinicPatient, payloadClinicPatient, { _id: 1, patientId: 1, clinicId: 1 }, { lean: true }, []);
@@ -374,6 +375,7 @@ const updateMessage = (locationId = null, clinicId = null, patientId = null, con
                     patientId: patientId,
                     locationId: locationId,
                     $or: [{ inQueue: true }, { isCheckIn: true }, { isCheckOut: true }],
+                    is_delete: { $ne: true },
                     visitDate: { $gte: new Date(start), $lte: new Date(end) }
                 }, {}, { lean: true });
                 if (patientFortheDay) {

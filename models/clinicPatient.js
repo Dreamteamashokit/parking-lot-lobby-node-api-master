@@ -11,6 +11,7 @@ var clinicPatientSchema = Schema({
     isCheckOut:{type:Boolean, default:false},
     is_block: {type: Boolean,default: false},
     is_delay:{type:Boolean,default:false},
+    is_delete:{type:Boolean,default:false},
     noShow:{type:Boolean,default:false},
     visitDate:{type:Date},
     checkIn:{type:Date},

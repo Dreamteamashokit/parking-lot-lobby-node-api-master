@@ -175,7 +175,7 @@ class UserController {
                 await commonFunctions.checkUserInformation(userData);
                 const criteria = {clinicId:userData.id};
                 let response = await DbOperations.findOne(settingSchema,criteria, {}, {} );
-                let response2 = await DbOperations.findOne(locationSchema, {_id: userData.locationId}, {openingTime: 1, isOpen: 1, closingTime: 1, isScheduleOpen: 1, selectedTimeZone: 1}, {});    
+                let response2 = await DbOperations.findOne(locationSchema, {_id: userData.locationId}, {openingTime: 1, isOpen: 1, closingTime: 1, isScheduleOpen: 1, isScheduleClose: 1, selectedTimeZone: 1}, {});    
                 return resolve({...response.toJSON(), scheduleInformation: response2.toJSON()});
             } catch (err) {
                 return reject(err);
@@ -445,6 +445,7 @@ class UserController {
                     locationId :  mongoose.Types.ObjectId(userData.locationId),
                     $or:[{inQueue:true},{isCheckIn:true}, {isCheckOut:true}],
                     visitDate:{ $gte: new Date(start), $lte: new Date(end)},
+                    is_delete: { $ne: true },
                     }
                 const todayPatient = await DbOperations.findAll(ClinicPatient,queryPayload, {patientId:1}, {lean: true})
                 let patientIds = [];
@@ -552,7 +553,7 @@ class UserController {
                 const [updateResponse, clinicFormId, response] = await Promise.all([
                     DbOperations.findAndUpdate(User,{_id: body.patientId},payload, {new: true}),                
                     commonFunctions.fetchJotformId(userData.locationId),
-                    DbOperations.findOne(ClinicPatient,{patientId: body.patientId, clinicId: userData.id, locationId:userData.locationId, visitDate:{ $gte: new Date(start), $lte: new Date(end)}}, {}, {lean: true})
+                    DbOperations.findOne(ClinicPatient,{is_delete: { $ne: true }, patientId: body.patientId, clinicId: userData.id, locationId:userData.locationId, visitDate:{ $gte: new Date(start), $lte: new Date(end)}}, {}, {lean: true})
                 ])
                 const submissionID = (response.submissionID) ? response.submissionID : null;
                 if(!submissionID) {
@@ -645,6 +646,7 @@ class UserController {
                     clinicId:clinicLocationData.clinicId,
                     patientId:payloadData.patientId,
                     visitDate: { $gte: new Date(start), $lte: new Date(end) },
+                    is_delete: { $ne: true },
                     inQueue:true 
                 }
                 const [existClinicPatient, updatedUser, clinicSetting] = await Promise.all([
@@ -715,6 +717,7 @@ class UserController {
                 let queryPayload = {
                     clinicId :  mongoose.Types.ObjectId(userData.id),
                     locationId: mongoose.Types.ObjectId(userData.locationId),
+                    is_delete: { $ne: true },
                     visitDate:visitDate                    
                 }
                 if(!settings.clientIncomplete) {
@@ -980,6 +983,7 @@ class UserController {
                 const criteria = {_id: mongoose.Types.ObjectId(userData.locationId)};
                 const QuerypayLoad ={ 
                     isScheduleOpen: payloadData.isScheduleOpen,
+                    isScheduleClose: payloadData.isScheduleClose,
                     selectedTimeZone: payloadData.selectedTimeZone,
                     openingTime: payloadData.openingTime,
                     closingTime: payloadData.closingTime,
@@ -1131,6 +1135,7 @@ class UserController {
                     clinicId:clinicLocationData.clinicId,
                     patientId:payloadData.patientId,
                     visitDate: { $gte: new Date(start), $lte: new Date(end) },
+                    is_delete: { $ne: true },
                     inQueue:true 
                 }
                 const [existClinicPatient, updatedUser, clinicSetting] = await Promise.all([
@@ -1238,6 +1243,7 @@ class UserController {
                     clinicId:clinicLocationData.clinicId,
                     patientId:payloadData.patientId,
                     visitDate: { $gte: new Date(start), $lte: new Date(end) },
+                    is_delete: { $ne: true },
                     inQueue: true
                 }
                 const [existClinicPatient, updatedUser, clinicFormId, alreadyMessageSend] = await Promise.all([

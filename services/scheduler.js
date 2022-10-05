@@ -28,6 +28,7 @@ const checkAndNotifyPatient = function () {
         notifyTime: { $exists: true },
         visitDate: { $gte: new Date(start), $lte: new Date(end) },
         clientSmsNotify: false,
+        is_delete: { $ne: true },
       };
       const populateQuery = [
         {
@@ -206,6 +207,7 @@ const checkPaperworkAndReminder = function () {
         isCheckOut: false,
         visitDate: { $gte: new Date(start), $lte: new Date(end) },
         submitPaperWork: false,
+        is_delete: { $ne: true },
         paperworkNotify: false,
       };
       const populateQuery = [
@@ -307,6 +309,7 @@ const checkProvidernotAtDesk = function () {
           locationId: { $in: locationIds },
           inQueue: true,
           clinicOffNotify: false,
+          is_delete: { $ne: true },
           visitDate: { $gte: new Date(start), $lte: new Date(end) },
         });
         if (patientFortheDay && patientFortheDay.length > 0) {
@@ -405,13 +408,16 @@ const scheduleClinicOpening = function () {
     try {
       const clinicLocationsData = await DBoperations.findAll(locationSchema, {
           isActive: true,
-          isScheduleOpen: true,
+          $or: [
+            { isScheduleOpen: true },
+            { isScheduleClose: true },
+          ],
         },
         {},
         {}
       );
-      const isDateMatch = (scheduleTime, offset) => {
-        const currentTime = moment().utcOffset(offset).format('HH:mm');
+      const isDateMatch = (scheduleTime, timezone) => {
+        const currentTime = moment().tz(timezone).format('HH:mm');
         return scheduleTime === currentTime
       }
       const emitOpening = (clinic, isOpen) => {
@@ -424,10 +430,10 @@ const scheduleClinicOpening = function () {
             });
       }
       for (const clinic of clinicLocationsData) {
-        if(isDateMatch(clinic.openingTime, clinic.selectedTimeZone.offset)) {
+        if(clinic.isScheduleOpen && isDateMatch(clinic.openingTime, clinic.selectedTimeZone.value)) {
           emitOpening(clinic, true);
           await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: true}, {});
-        } else if(isDateMatch(clinic.closingTime, clinic.selectedTimeZone.offset)) {
+        } else if(clinic.isScheduleClose && isDateMatch(clinic.closingTime, clinic.selectedTimeZone.value)) {
           emitOpening(clinic, false);
           await DBoperations.findAndUpdate(locationSchema,{_id: mongoose.Types.ObjectId(clinic._id)},{isOpen: false}, {});
         }
@@ -676,6 +682,7 @@ async function fetchLocationPatientAndSendStatus(singleClinicSetting) {
                 isCheckIn: false,
                 isCheckOut: false,
                 is_block: false,
+                is_delete: { $ne: true },
               };
               let aggregate = [
                 { $match: queryPayload },
