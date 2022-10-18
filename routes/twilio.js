@@ -4,8 +4,8 @@ import Twilio from 'twilio';
 import {commonFunctions, logger} from '../services';
 const MessagingResponse = Twilio.twiml.MessagingResponse;
 import {TwilioController} from '../controller';
-// import multer from 'multer';
-// const upload = multer({limits: { fieldSize: 25 * 1024 * 1024 }, dest: 'public/images/jotform' });
+import multer from 'multer';
+const upload = multer({limits: { fieldSize: 25 * 1024 * 1024 }, dest: 'public/images/jotform' });
 
 router.get('/',async (req,res) => {
   try {
@@ -34,7 +34,7 @@ router.post('/sms', async function(req, res, next) {
     res.end(twiml.toString());
   }
 });
-router.post('/jotNotification', async function (req, res) {
+router.post('/jotNotification', upload.any(), async function (req, res) {
   try {
     logger.dump({path: 'twillio route: 38', body: req.body})
     console.log('\n req.body:', req.body.submissionID, '\n formID:', req.body.formID);

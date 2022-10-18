@@ -490,6 +490,510 @@ const createFormSubmission = (formID, submissions) => {
         }
     })
 }
+const syncFormSubmissions = async () => {
+    try {
+        const apikey = process.env.JOT_FORM_KEY;
+
+        const patients = await DBoperations.findAll(
+            ClinicPatient,
+            {
+                submissionID: null,
+                createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            },
+            {},
+            { lean: true }
+        );
+        const locationIds = [...new Set(patients.map(el => el.locationId))];
+
+        // let locationForms = {};
+
+        let formIds = [];
+
+        for (const locationId of locationIds) {
+            const formId = await fetchJotformId(locationId)
+            // locationForms[locationId] = formId;
+            formIds.push(formId)
+        }
+        // formIds = await Promise.all(formIds);
+
+        let submissions = [];
+
+        for (const formId of formIds) {
+            const { data } = await axios.get(`${process.env.JOT_FORM_URL}/form/${formId}/submissions`,
+                { params: { apikey } }
+            )
+            submissions = [...submissions, ...data.content];
+        }
+
+        for (const patient of patients) {
+            console.log('patient', patient._id);
+            for (const submission of submissions) {
+                // console.info('submission', submission.id, submission.form_id)
+                for (const key in submission.answers) {
+                    if (submission.answers[key].name === 'clientPatientId' && submission.answers[key].answer == patient._id) {
+                        console.log('patient ans', submission.answers[key].answer, patient._id);
+                        try {
+                            syncPatient(submission);
+                        } catch (err) {
+                            console.log(err)
+                        }
+                    }
+                }
+            }
+        }
+
+    } catch (error) {
+        console.log(err)
+    }
+}
+
+const syncPatient = (payload) => {
+    return new Promise(async (resolve, reject) => {
+      let clinicPatient = null;
+      try {
+        const submissionID = payload.id ? payload.id : null;
+        const FormId = payload.form_id ? payload.form_id : null;
+        // const rowData = JSON.parse(payload.rawRequest);
+        let rowData = {};
+        for (const key in payload.answers) {
+          rowData[`q${key}_${payload.answers[key].name}`] = payload.answers[key].answer;
+        }
+        //console.log("\n jotNotification rowData:", rowData);
+        if (!submissionID || !FormId) {
+          return reject({ message: "FormId or submissionID missing." });
+        }
+
+        const questions = await commonFunctions.getFormQuestions(FormId);
+        if (!questions) {
+          return reject({ message: "Jot Form questions missing." });
+        }
+        const userPayload = {};
+        const clinicPayload = {
+          uploadNotify: false,
+          inQueue: true,
+          inQueueAt: new Date(),
+          submitPaperWork: true,
+          submissionID: submissionID,
+        };
+        let clientPatientId = null;
+        let parentPatientId = null;
+
+        for (let [key, value] of Object.entries(questions)) {
+          if (value && value.hasOwnProperty("name")) {
+            let fieldName = value.name;
+            //console.log("\n\n== fieldName :", fieldName)
+            let qid = value.hasOwnProperty("qid") ? value.qid : 0;
+            switch (fieldName) {
+              case "whatParking":
+                clinicPayload["parkingSpot"] = rowData[`q${qid}_whatParking`];
+                break;
+              case "hasPatient":
+                const hasValue = rowData[`q${qid}_hasPatient`];
+                userPayload["hasPatient"] =
+                  hasValue && hasValue === "NO" ? 2 : 1;
+                break;
+              case "patientName":
+                userPayload["first_name"] =
+                  rowData[`q${qid}_patientName`]["first"];
+                userPayload["last_name"] =
+                  rowData[`q${qid}_patientName`]["last"];
+                    break;
+                case "dateOfBirth":
+                    if (rowData[`q${qid}_dateOfBirth`]) {
+                        const year = rowData[`q${qid}_dateOfBirth`]["year"];
+                        const month = rowData[`q${qid}_dateOfBirth`]["month"];
+                        const day = rowData[`q${qid}_dateOfBirth`]["day"];
+                        userPayload["dob"] = new Date(`${year}-${month}-${day}`);
+                    }
+                    break;
+                case "dateOf":
+                    let dateOf = rowData[`q${qid}_dateOf`];
+                    if (dateOf) {
+                        const [month, day, year] = dateOf.split('/');
+                        userPayload["dob"] = new Date(`${year}-${month}-${day}`);
+                    }
+                    break;
+                case "reasonFor":
+                    clinicPayload["visitReason"] = rowData[`q${qid}_reasonFor`];
+                break;
+              case "email":
+                userPayload["email"] = rowData[`q${qid}_email`];
+                break;
+              case "insuranceCardUpdate":
+                let in_field = rowData[`q${qid}_insuranceCardUpdate`];
+                if (in_field && in_field !== "" && in_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "drivingLicenseFront":
+                let df_field = rowData[`q${qid}_drivingLicenseFront`];
+                if (df_field && df_field !== "" && df_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "drivingLicenseBack":
+                let db_field = rowData[`q${qid}_drivingLicenseBack`];
+                if (db_field && db_field !== "" && db_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "insuranceFront":
+                let if_field = rowData[`q${qid}_insuranceFront`];
+                if (if_field && if_field !== "" && if_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "secondaryInsuranceFront":
+                let sif_field = rowData[`q${qid}_secondaryInsuranceFront`];
+                if (sif_field && sif_field !== "" && sif_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "patientSecondaryInsuranceAdd":
+                let ps_field = rowData[`q${qid}_patientSecondaryInsuranceAdd`];
+                if (ps_field && ps_field !== "" && ps_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "secondaryInsuranceBack":
+                let sib_field = rowData[`q${qid}_secondaryInsuranceBack`];
+                if (sib_field && sib_field !== "" && sib_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "initials":
+                let i_field = rowData[`q${qid}_initials`];
+                if (i_field && i_field !== "" && i_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "signature":
+                let s_field = rowData[`q${qid}_signature`];
+                if (s_field && s_field !== "" && s_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "insuranceBack":
+                let ib_field = rowData[`q${qid}_insuranceBack`];
+                if (ib_field && ib_field !== "" && ib_field !== "")
+                  clinicPayload["uploadNotify"] = true;
+                break;
+              case "clientPatientId":
+                clientPatientId = rowData[`q${qid}_clientPatientId`];
+                break;
+              case "parentPatientId":
+                parentPatientId = rowData[`q${qid}_parentPatientId`];
+                break;
+              case "gender":
+                switch (rowData[`q${qid}_gender`]) {
+                  case "Male":
+                    userPayload.gender = 1;
+                    break;
+                  case "Female":
+                    userPayload.gender = 2;
+                    break;
+                  case "Other":
+                    userPayload.gender = 3;
+                    break;
+                  default:
+                    userPayload.gender = 1;
+                    break;
+                }
+                break;
+              default:
+                break;
+            }
+          }
+        }
+        if (parentPatientId) {
+          const parentPatientData = await DBoperations.findOne(
+            ClinicPatient,
+            { _id: parentPatientId },
+            {},
+            { lean: true }
+          );
+          if (!parentPatientData) {
+            return reject({
+              message: "No parent patient found with parentPatientId.",
+            });
+          }
+          const subPatientPayload = {
+            first_name: userPayload.first_name ? userPayload.first_name : "",
+            last_name: userPayload.last_name ? userPayload.last_name : "",
+            email: userPayload.email ? userPayload.email : "",
+            gender: userPayload.gender ? userPayload.gender : 1,
+            dob: userPayload.dob ? userPayload.dob : new Date(),
+            parentClientId: parentPatientId,
+            submissionID: submissionID,
+          };
+          await DBoperations.saveData(SubPatientSchema, subPatientPayload);
+          const clinicLocationData = await DBoperations.findOne(
+            locationSchema,
+            { _id: parentPatientData.locationId },
+            { twilioNumber: 1, clinicId: 1, allowSmsFeature:1 },
+            { lean: true }
+          );
+          const updatedUser = await DBoperations.findOne(
+            User,
+            { _id: parentPatientData.patientId },
+            {},
+            { lean: true }
+          );
+          let sendMessage = `${subPatientPayload.first_name} is Successfully added into your queue list`;
+          if (clinicLocationData?.allowSmsFeature) {
+            const sendPayload = {
+              to: updatedUser.fullNumber,
+              from: clinicLocationData.twilioNumber,
+              body: sendMessage,
+            };
+            await commonFunctions.sendTwilioMessage(sendPayload);
+            await commonFunctions.updateMessage(
+              clinicLocationData._id,
+              clinicLocationData.clinicId,
+              updatedUser._id,
+              sendMessage,
+              2,
+              true
+            );
+          } else {
+            await commonFunctions.updateMessage(
+              clinicLocationData._id,
+              clinicLocationData.clinicId,
+              updatedUser._id,
+              sendMessage,
+              2,
+              false
+            );
+          }
+          await DBoperations.findAndUpdate(
+            ClinicPatient,
+            {
+              _id: parentPatientId,
+            },
+            {
+              uploadNotify: true,
+            }
+          )
+        } else {
+          if (!clientPatientId)
+            return reject({
+              message: "No clientPatientid Found into jotform response.",
+            });
+
+          const isResubmit = await DBoperations.findOne(
+            ClinicPatient,
+            {
+              _id: clientPatientId,
+              submissionID: { $ne: null },
+            },
+            {},
+            { lean: true }
+          );
+          if (isResubmit) {
+            const user = await DBoperations.findOne(User, { _id: isResubmit.patientId }, {}, { lean: true });
+            const location = await DBoperations.findOne(locationSchema, { _id: isResubmit.locationId }, {}, { lean: true });
+            const sendPayload = {
+              to: user.fullNumber,
+              from: location.twilioNumber,
+              body: `Your link is expired, please get new link by sending "Arrived" sms.`,
+            };
+            await commonFunctions.sendTwilioMessage(sendPayload);
+            return reject({
+              message: "Resubmission jotform.",
+            });
+          }
+
+          const clientPatientData = await DBoperations.findOne(
+            ClinicPatient,
+            { _id: clientPatientId },
+            {},
+            { lean: true }
+          );
+          if (!clientPatientData) {
+            return reject({ message: "No patient found with submissionId." });
+          }
+          clinicPatient = clientPatientData;
+          await Promise.all([
+            await DBoperations.findAndUpdate(
+              ClinicPatient,
+              {
+                _id: clientPatientData._id,
+                isCheckIn: false,
+                isCheckOut: false,
+              },
+              clinicPayload
+            ),
+            await DBoperations.findAndUpdate(
+              User,
+              { _id: clientPatientData.patientId },
+              userPayload
+            ),
+          ]);
+          const [
+            updatedUser,
+            clinicSetting,
+            clinicLocationData,
+            uploaded_files,
+          ] = await Promise.all([
+            DBoperations.findOne(
+              User,
+              { _id: clientPatientData.patientId },
+              {},
+              { lean: true }
+            ),
+            DBoperations.findOne(
+              settingSchema,
+              { clinicId: clientPatientData.clinicId },
+              {},
+              {}
+            ),
+            DBoperations.findOne(
+              locationSchema,
+              { _id: clientPatientData.locationId },
+              { twilioNumber: 1, clinicId: 1, allowSmsFeature: 1 },
+              { lean: true }
+            ),
+            commonFunctions.getSubmission(submissionID),
+          ]);
+          const businessName =
+            clinicSetting &&
+            clinicSetting.businessInformation &&
+            clinicSetting.businessInformation.companyName
+              ? clinicSetting.businessInformation.companyName
+              : "Our business";
+          const userName = `${updatedUser.first_name} ${updatedUser.last_name}`;
+          let sendMessage = await commonFunctions.getReplyMessage(
+            "submit_paperwork",
+            0,
+            0,
+            businessName,
+            userName,
+            0
+          );
+          if (clinicLocationData?.allowSmsFeature) {
+            const sendPayload = {
+              to: updatedUser.fullNumber,
+              from: clinicLocationData.twilioNumber,
+              body: sendMessage,
+            };
+            // console.log("\n on submit 1st jotform..", sendMessage);
+            await Promise.all([
+              commonFunctions.sendTwilioMessage(sendPayload),
+              commonFunctions.updateMessage(
+                clinicLocationData._id,
+                clinicLocationData.clinicId,
+                updatedUser._id,
+                sendMessage,
+                2,
+                true
+              ),
+            ]);
+          } else {
+            await commonFunctions.updateMessage(
+              clinicLocationData._id,
+              clinicLocationData.clinicId,
+              updatedUser._id,
+              sendMessage,
+              2,
+              false
+            );
+          }
+
+          io.sockets
+            .to(`room_${clinicLocationData.clinicId}`)
+            .emit("new-patient", {
+              clientId: clinicLocationData.clinicId,
+              locationId: clinicLocationData._id,
+            });
+          commonFunctions.updateMessage(
+            clinicLocationData._id,
+            clinicLocationData.clinicId,
+            updatedUser._id,
+            "patient has completed Paperwork.",
+            1
+          );
+          if (uploaded_files && uploaded_files.length > 0) {
+            await commonFunctions.updateMessage(
+              clinicLocationData._id,
+              clinicLocationData.clinicId,
+              updatedUser._id,
+              "patient uploaded file over jotfrom.",
+              1
+            );
+          }
+        }
+        //const isFieldDataEmpty = await commonFunctions.IsEmpty(userPayload);
+
+        /* if (isFieldDataEmpty) {
+                    await DBoperations.findAndUpdate(ClinicPatient, { _id: clientPatientData._id, isCheckIn: false, isCheckOut: false }, clinicPayload);
+                } else { */
+
+        //}
+        return resolve(true);
+      } catch (error) {
+        console.log(error);
+        // logger.error({path: 'twillio controller 547', error: error.message || error})
+        if (error.name === "MongoError" && error.code === 11000) {
+          return reject(
+            new Error(
+              "email must be unique. THis email already exist into our system."
+            )
+          );
+        } else {
+          if (!clinicPatient) {
+            return reject(error);
+          }
+          const [userData, clinicLocationData] = await Promise.all([
+            DBoperations.findOne(
+              User,
+              { _id: clinicPatient.patientId },
+              {},
+              { lean: true }
+            ),
+            DBoperations.findOne(
+              locationSchema,
+              { _id: clinicPatient.locationId },
+              { twilioNumber: 1, clinicId: 1, allowSmsFeature: 1 },
+              { lean: true }
+            ),
+          ]);
+          if (!userData) return reject(error);
+          const sendMessage = error.message
+            ? `During save jotform info follow error occur: ${error.message} . Please contact to clinic.`
+            : "Something went wrong during submit your basic info.Please try again with same link.";
+          if (error.code && error.code === 21610) {
+            await commonFunctions.updateMessage(
+              clinicLocationData._id,
+              clinicLocationData.clinicId,
+              userData._id,
+              sendMessage,
+              2
+            );
+          } else {
+            if (clinicLocationData?.allowSmsFeature) {
+              const sendPayload = {
+                to: userData.fullNumber,
+                from: clinicLocationData.twilioNumber,
+                body: sendMessage,
+              };
+              await Promise.all([
+                commonFunctions.sendTwilioMessage(sendPayload),
+                commonFunctions.updateMessage(
+                  clinicLocationData._id,
+                  clinicLocationData.clinicId,
+                  userData._id,
+                  sendMessage,
+                  2,
+                  true
+                ),
+              ]);
+            } else {
+              await commonFunctions.updateMessage(
+                clinicLocationData._id,
+                clinicLocationData.clinicId,
+                userData._id,
+                sendMessage,
+                2,
+                false
+              );
+            }
+          }
+          return reject(error);
+        }
+      }
+    });
+  }
 const editFormSubmission = (submissionId, submissions) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -775,6 +1279,7 @@ const commonFunctions = {
     shorterUrl,
     addAdmin,
     subtractMinutes,
+    syncFormSubmissions,
     getWeekMonthYearStartEnd
 }
 

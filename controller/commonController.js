@@ -10,6 +10,7 @@ import {
 import { DbOperations, commonFunctions } from "../services";
 var mongoose = require("mongoose");
 import axios from "axios";
+import jimp from "jimp";
 import moment from "moment";
 
 class CommonController {
@@ -399,6 +400,7 @@ class CommonController {
           patientId: payloadData.patientId,
           clinicId: userData.id,
           locationId: userData.locationId,
+          is_delete: { $ne: true },
           visitDate: { $gte: new Date(start), $lte: new Date(end) },
         };
         const updatePayload = {
@@ -452,7 +454,11 @@ class CommonController {
             from: clinicLocationData.twilioNumber,
             body: sendMessage,
           };
-          await commonFunctions.sendTwilioMessage(sendPayload);
+          try {
+            await commonFunctions.sendTwilioMessage(sendPayload);
+          } catch (error) {
+            console.log(error)
+          }
           await commonFunctions.updateMessage(
             userData.locationId,
             userData.id,
@@ -500,6 +506,7 @@ class CommonController {
           patientId: payloadData.patientId,
           clinicId: userData.id,
           locationId: userData.locationId,
+          is_delete: { $ne: true },
           visitDate: { $gte: new Date(start), $lte: new Date(end) },
           isCheckIn: true,
         };
@@ -575,17 +582,21 @@ class CommonController {
               from: clinicLocationData.twilioNumber,
               body: sendMessage,
             };
-            await Promise.all([
-              commonFunctions.sendTwilioMessage(sendPayload),
-              commonFunctions.updateMessage(
-                userData.locationId,
-                userData.id,
-                patientData._id,
-                sendMessage,
-                2,
-                true
-              ),
-            ]);
+            try {
+              await Promise.all([
+                commonFunctions.sendTwilioMessage(sendPayload),
+                commonFunctions.updateMessage(
+                  userData.locationId,
+                  userData.id,
+                  patientData._id,
+                  sendMessage,
+                  2,
+                  true
+                ),
+              ]);
+            } catch (error) {
+              console.log(error)
+            }
           } else {
             await commonFunctions.updateMessage(
               userData.locationId,
@@ -1847,6 +1858,20 @@ async function jotFormUpdate(
     }
   });
 }
+
+async function getAttachmentFromUrl2(url) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let { data } = await axios.get(url, { params: { apiKey: process.env.JOT_FORM_KEY }, responseType: 'arraybuffer' })
+      data = await (await jimp.read(data)).resize(250, 250, jimp.AUTO).background(0xFFFFFFFF);
+      data = await data.getBase64Async(jimp.MIME_JPEG);
+      return resolve(data);
+    } catch (err) {
+      console.log("\n error in getAttachmentFromUrl2:",  err);
+      return resolve(url + '?apikey=' + process.env.JOT_FORM_KEY);
+    }
+  });
+}
 async function submissionFormDynamic(response, submissionID, isPreview = false) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1879,7 +1904,10 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
           ans.prettyFormat = ans?.sublabels ? prettyFormat(ans) : ans.prettyFormat;
           ans['ans'] = ans?.type === 'control_fileupload' ? ans?.answer[0] : (ans?.prettyFormat || ans?.answer);
           ans['isLink'] = isValidHttpUrl(ans['ans'])
-          answers.push(ans)
+          if(ans['isLink'] && !isPreview && ans['ans']) {
+            ans['ans'] = getAttachmentFromUrl2(ans['ans'])
+          }
+          if(ans['ans']) answers.push(ans);
         }
       }
       answers.sort((a, b) => Number(a.order) - Number(b.order))
@@ -1915,7 +1943,14 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
           html += `${el?.isLink ? '<img class="p-img" src="' + process.env.FILE_PROXY_URL + '/common/download/png?url=' + encodeURIComponent(el?.ans) + '" alt="' + el?.name + '" />' : el?.ans}`;
         } else {
           if (el?.isLink) {
-            html += `<img class="p-img" src="${el?.ans + '?apiKey=' + process.env.JOT_FORM_KEY}" />`
+            // const base64Img = await getAttachmentFromUrl2(el?.ans)
+            let link = '';
+            try {
+              link = await el?.ans;
+            } catch (err) {
+              console.log(err);
+            }
+            html += `<img class="p-img" src="${link}" />`
           } else {
             html += el?.ans;
           }
@@ -1943,6 +1978,7 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
       );
       return resolve(saveResponse);
     } catch (err) {
+      console.log(err)
       return reject(err);
     }
   });

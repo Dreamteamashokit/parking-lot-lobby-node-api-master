@@ -1,6 +1,8 @@
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import * as dotenv from 'dotenv';
+dotenv.config();
 import {userRouter, twilioRouter, commonRouter, adminRouter, jotformRouter} from './routes/index.js'
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger.json';
@@ -8,8 +10,6 @@ import {scheduler} from './services';
 import {addAdmin} from './services/commonFunctions';
 
 import mongoose from 'mongoose';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 import cors from 'cors';
 
@@ -112,4 +112,5 @@ scheduler.checkPaperworkAndReminder();
 scheduler.checkProvidernotAtDesk();
 scheduler.sendStatusToPatients();
 scheduler.scheduleClinicOpening();
+scheduler.syncFormSubmissions();
 module.exports = app;
