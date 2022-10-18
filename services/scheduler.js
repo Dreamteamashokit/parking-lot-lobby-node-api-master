@@ -444,6 +444,17 @@ const scheduleClinicOpening = function () {
     }
   });
 };
+// Run every 10 Minute
+const syncFormSubmissions = function () {
+  return cron.schedule("*/10 * * * *", async () => {
+    try {
+      await commonFunctions.syncFormSubmissions();
+      return true;
+    } catch (err) {
+      console.log("\n error syncFormSubmissions:", err);
+    }
+  });
+};
 const sendStatusToPatients = function () {
   return cron.schedule("* * * * *", async () => {
     try {
@@ -773,6 +784,7 @@ const scheduler = {
   checkProvidernotAtDesk: checkProvidernotAtDesk,
   sendStatusToPatients: sendStatusToPatients,
   scheduleClinicOpening: scheduleClinicOpening,
+  syncFormSubmissions,
 };
 
 module.exports = scheduler;

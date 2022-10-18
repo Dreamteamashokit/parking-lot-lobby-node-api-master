@@ -263,10 +263,19 @@ class TwilioController {
                   rowData[`q${qid}_patientName`]["last"];
                 break;
               case "dateOfBirth":
-                const year = rowData[`q${qid}_dateOfBirth`]["year"];
-                const month = rowData[`q${qid}_dateOfBirth`]["month"];
-                const day = rowData[`q${qid}_dateOfBirth`]["day"];
-                userPayload["dob"] = new Date(`${year}-${month}-${day}`);
+                if(rowData[`q${qid}_dateOfBirth`]) {
+                  const year = rowData[`q${qid}_dateOfBirth`]["year"];
+                  const month = rowData[`q${qid}_dateOfBirth`]["month"];
+                  const day = rowData[`q${qid}_dateOfBirth`]["day"];
+                  userPayload["dob"] = new Date(`${year}-${month}-${day}`);
+                }
+                break;
+              case "dateOf":
+                let dateOf = rowData[`q${qid}_dateOf`];
+                if(dateOf) {
+                  const [month, day, year] = dateOf.split('/');
+                  userPayload["dob"] = new Date(`${year}-${month}-${day}`);
+                }
                 break;
               case "reasonFor":
                 clinicPayload["visitReason"] = rowData[`q${qid}_reasonFor`];

@@ -43,13 +43,13 @@ import { loggerSchema } from '../models';
 // const logger = winston.createLogger(logConfiguration);
 // const logger2 = winston.createLogger(logConfiguration2);
 
-const logger = new loggerSchema({
-    status: 'info',
-    content: 'restarted'
-})
-logger.save(() => {
+// const logger = new loggerSchema({
+//     status: 'info',
+//     content: 'restarted'
+// })
+// logger.save(() => {
     
-});
+// });
 
 module.exports = {
     error: async (message) => {

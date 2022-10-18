@@ -232,6 +232,7 @@ router.put('/waitingToCheckIn', async (req,res)=> {
         const response = await CommonController.waitingToCheckIn(req.body, req.userData)
         return res.status(200).send({status:true, message: commonFunctions.getSuccessMessage('PUT') ,  data:response})
     } catch (err) {
+      console.log(err);
       let actualMessage =(err && err.message) ? err.message : commonFunctions.getErrorMessage('somethingWrongElse');
       let message = commonFunctions.getErrorMessage('somethingWrong') ; 
       let statusCode = (err && err.status) ? err.status : 500;

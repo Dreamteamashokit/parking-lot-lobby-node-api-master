@@ -1,6 +1,9 @@
 import {User, Message,ClinicPatient,settingSchema, locationSchema, reviewSchema} from '../models';
 import {DbOperations, commonFunctions} from '../services';
 
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 if (!process.env.HIPPA_JOT_URL) {
     throw new Error('Missing enviornment variable: HIPPA_JOT_URL');
 }
