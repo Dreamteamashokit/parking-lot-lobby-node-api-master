@@ -399,6 +399,7 @@ class CommonController {
         const queryPayload = {
           patientId: payloadData.patientId,
           clinicId: userData.id,
+          _id: payloadData.appointmentId,
           locationId: userData.locationId,
           is_delete: { $ne: true },
           visitDate: { $gte: new Date(start), $lte: new Date(end) },
@@ -506,6 +507,7 @@ class CommonController {
           patientId: payloadData.patientId,
           clinicId: userData.id,
           locationId: userData.locationId,
+          _id: payloadData.appointmentId,
           is_delete: { $ne: true },
           visitDate: { $gte: new Date(start), $lte: new Date(end) },
           isCheckIn: true,
