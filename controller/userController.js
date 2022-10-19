@@ -703,7 +703,8 @@ class UserController {
         return new Promise(async (resolve,reject)=> {
             try {
                 await commonFunctions.checkUserInformation(userData);
-                let {start,end} = await commonFunctions.getUTCStartEndOfTheDay(); 
+                const visitDate1 = new Date().toUTCString().substring(0, 16)
+                let {start,end} = await commonFunctions.getformatedStartEndDay(visitDate1); 
                 let visitDate ={ $gte: new Date(start), $lte: new Date(end)};
                 
                 if(payloadData.visitDate) {
