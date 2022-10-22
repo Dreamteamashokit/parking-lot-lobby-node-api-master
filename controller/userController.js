@@ -179,7 +179,7 @@ class UserController {
                 const criteria = {clinicId:userData.id};
                 let response = await DbOperations.findOne(settingSchema,criteria, {}, {} );
                 let response2 = await DbOperations.findOne(locationSchema, {_id: userData.locationId}, {openingTime: 1, isOpen: 1, closingTime: 1, isScheduleOpen: 1, isScheduleClose: 1, selectedTimeZone: 1}, {});    
-                return resolve({...response.toJSON(), scheduleInformation: response2.toJSON()});
+                return resolve({...response?.toJSON(), scheduleInformation: response2?.toJSON()});
             } catch (err) {
                 return reject(err);
             }
