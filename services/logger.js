@@ -48,26 +48,34 @@ import { loggerSchema } from '../models';
 //     content: 'restarted'
 // })
 // logger.save(() => {
-    
+
 // });
 
 module.exports = {
     error: async (message) => {
-        const content = typeof message === 'string' ? message : JSON.stringify({ message })
-        const logger = new loggerSchema({
-            status: 'error',
-            content
-        })
-        await logger.save();
+        try {
+            const content = typeof message === 'string' ? message : JSON.stringify({ message })
+            const logger = new loggerSchema({
+                status: 'error',
+                content
+            })
+            await logger.save();
+        } catch (error) {
+            console.log(error)
+        }
         // logger.error(message)
     },
     dump: async (message) => {
-        const content = typeof message === 'string' ? message : JSON.stringify({ message })
-        const logger = new loggerSchema({
-            status: 'action',
-            content
-        })
-        await logger.save();
+        try {
+            const content = typeof message === 'string' ? message : JSON.stringify({ message })
+            const logger = new loggerSchema({
+                status: 'action',
+                content
+            })
+            await logger.save();
+        } catch (error) {
+            console.log(error)
+        }
         // message = typeof message === 'string' ? message : JSON.stringify({ message })
         // logger2.info(message)
     },
