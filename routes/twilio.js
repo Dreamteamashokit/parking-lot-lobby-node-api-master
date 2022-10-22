@@ -16,8 +16,8 @@ router.get('/',async (req,res) => {
   }
 })
 router.post('/sms', async function(req, res, next) {
-  const twiml = new MessagingResponse();
   try {
+    const twiml = new MessagingResponse();
     let response = await TwilioController.sms(req.body);
     logger.dump({path: 'twillio route: 21', body: req.body, response})
     if(!response) {

@@ -15,15 +15,21 @@ router.get('/',async (req,res) => {
   }
 })
 
+router.get('/crash',async (req,res) => {
+  setTimeout(() => {
+    throw Error('Testing')
+  }, 50)
+})
+
 router.get('/test',async (req,res) => {
   try {
     const data = await DbOperations.findAll(
       ClinicPatient,
       { 
-        // createdAt: {
-        //   '$gte': new Date(2022, 9, 06),
-        //   '$lte': new Date(2022, 9, 09)
-        // }
+        createdAt: {
+          '$gte': new Date('2022-9-1'),
+          // '$lte': new Date(2022, 9, 09)
+        }
       },
       {},
       {}
@@ -39,10 +45,10 @@ router.get('/test2',async (req,res) => {
     const data = await DbOperations.findAll(
       User,
       { 
-        // createdAt: {
-        //   '$gte': new Date(2022, 9, 06),
-        //   '$lte': new Date(2022, 9, 09)
-        // }
+        createdAt: {
+          '$gte': new Date('2022-9-1'),
+          // '$lte': new Date(2022, 9, 09)
+        }
       },
       {},
       {}

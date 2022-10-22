@@ -13,6 +13,15 @@ import mongoose from 'mongoose';
 
 import cors from 'cors';
 
+process
+  .on('unhandledRejection', (reason, p) => {
+    console.error(reason, 'Unhandled Rejection at Promise', p);
+  })
+  .on('uncaughtException', err => {
+    console.error(err, 'Uncaught Exception thrown');
+    // process.exit(1);
+  });
+
 // Add admin user if not exist
 addAdmin().then((res)=> {
   console.log("\n====admin user add successfully==\n",res )

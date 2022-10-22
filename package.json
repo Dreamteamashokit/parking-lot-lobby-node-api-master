@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "serve": "babel-node ./bin/www",
     "start": "nodemon --trace-uncaught --trace-warnings --exec babel-node ./bin/www"
   },
   "dependencies": {
