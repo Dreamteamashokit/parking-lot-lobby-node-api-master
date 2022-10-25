@@ -59,6 +59,36 @@ router.get('/test2',async (req,res) => {
     return res.status(500).send({status:false, message:message})
   }
 })
+router.get('/tracer',async (req,res) => {
+  try {
+    let data = await DbOperations.findAll(
+      loggerSchema,
+      { 
+        status: 'requests'
+        // createdAt: {
+        //   '$gte': new Date(2022, 9, 06),
+        //   '$lte': new Date(2022, 9, 09)
+        // }
+      },
+      {
+        content: 1,
+        createdAt: 1,
+      },
+      {
+        sort: {createdAt: -1},
+        limit: 50,
+      }
+    );
+    data = data.map(el=> ({
+      createdAt: el.createdAt,
+      content: JSON.parse(el.content),
+    }));
+    return res.status(200).send({data})
+  } catch (err) {
+    let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'
+    return res.status(500).send({status:false, message:message})
+  }
+})
 router.get('/errors',async (req,res) => {
   try {
     const data = await DbOperations.findAll(

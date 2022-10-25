@@ -7,7 +7,7 @@ import {userRouter, twilioRouter, commonRouter, adminRouter, jotformRouter} from
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger.json';
 import {scheduler} from './services';
-import {addAdmin} from './services/commonFunctions';
+import {addAdmin, tracer} from './services/commonFunctions';
 
 import mongoose from 'mongoose';
 
@@ -84,6 +84,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.all('*', function(req, res, next) {
+  try {
+    tracer(req);
+  } catch (error) {
+    console.log('tracer1', error)
+  }
+  next();
+});
 
 app.use('/twilio', twilioRouter);
 app.use('/user', userRouter);

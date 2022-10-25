@@ -5,6 +5,7 @@ import Twilio from 'twilio';
 import { User, Message, settingSchema, ClinicPatient, locationSchema } from '../models';
 import format from 'string-format';
 import DBoperations from './DBoperations';
+import logger from './logger';
 import sgMail from '@sendgrid/mail';
 import * as jotform from 'jotform';
 import _ from 'underscore';
@@ -499,6 +500,35 @@ const createFormSubmission = (formID, submissions) => {
             return reject(err)
         }
     })
+}
+const tracer = async (req) => {
+    
+  try {
+    let userDetails = null;
+    try {
+      userDetails = await verifyToken(req.header('Authorization'));
+    } catch (error) {
+      
+    }
+    const ips = (
+        req.headers['myip'] ||
+        req.ip ||
+        req.headers['cf-connecting-ip'] ||
+        req.headers['x-real-ip'] ||
+        req.headers['x-forwarded-for'] ||
+        req.connection.remoteAddress || ''
+    );
+    const ip = ips.split(',')[0].trim();
+    const data = {
+      userAgent: req.headers['user-agent'],
+      user: userDetails?.id,
+      url: req.originalUrl,
+      ip
+    }
+    logger.requests(data)
+  } catch (error) {
+    console.log('tracer', error)
+  }
 }
 const syncFormSubmissions = async () => {
     try {
@@ -1294,6 +1324,7 @@ const commonFunctions = {
     addAdmin,
     subtractMinutes,
     syncFormSubmissions,
+    tracer,
     getWeekMonthYearStartEnd
 }
 

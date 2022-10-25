@@ -79,4 +79,16 @@ module.exports = {
         // message = typeof message === 'string' ? message : JSON.stringify({ message })
         // logger2.info(message)
     },
+    requests: async (data) => {
+        try {
+            const content = typeof data === 'string' ? data : JSON.stringify(data)
+            const logger = new loggerSchema({
+                status: 'requests',
+                content
+            })
+            await logger.save();
+        } catch (error) {
+            console.log(error)
+        }
+    },
 }
