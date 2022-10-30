@@ -160,8 +160,8 @@ const getErrorMessage = (type) => {
 const getUTCStartEndOfTheDay = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            var start = moment.utc().utcOffset('-0500').startOf('day');
-            var end = moment.utc().utcOffset('-0500').endOf('day');
+            var start = moment.utc().tz('America/New_York').startOf('day');
+            var end = moment.utc().tz('America/New_York').endOf('day');
             return resolve({ start: start, end: end });
         } catch (err) {
             return reject(err);
@@ -1070,8 +1070,8 @@ const IsEmpty = (payload) => {
 const getformatedStartEndDay = (date) => {
     return new Promise(async (resolve, reject) => {
         try {
-            var start = moment(new Date(date)).startOf('day');
-            var end = moment(new Date(date)).endOf('day');
+            var start = moment(new Date(date)).utc().tz('America/New_York').startOf('day');
+            var end = moment(new Date(date)).utc().tz('America/New_York').endOf('day');
             return resolve({ start: start, end: end });
         } catch (err) {
             return reject(err);
