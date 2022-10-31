@@ -798,56 +798,6 @@ class CommonController {
             message: "Missing Required Parameters:patientId.",
           };
         }
-       try {
-        if (bodyPayload?.reschedule) {
-          const { start, end } = await commonFunctions.getUTCStartEndOfTheDay();
-          const clinicPayload = {
-            locationId: userData.locationId,
-            clinicId: userData._id,
-            patientId: payloadData.id,
-            submissionID: null,
-            visitDate: new Date(),
-            inQueue: false,
-          };
-          const [
-            clinicLocationData,
-            user,
-          ] = await Promise.all([
-            DbOperations.findOne(
-              locationSchema,
-              { _id: userData.locationId },
-              {},
-              { lean: true }
-            ),
-            DbOperations.findOne(User, { _id: payloadData.id }),
-          ]);
-          if (!clinicLocationData) {
-            throw new Error(commonFunctions.getErrorMessage("clinicNotFound"));
-          } else if (!clinicLocationData.twilioNumber) {
-            throw new Error(
-              commonFunctions.getErrorMessage("clinicContactNotFound")
-            );
-          }
-
-          const formatedDate = start.format("MM/DD/YYYY");
-          //let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${baseUrl}/patient/${locationId}/${patientID}`;
-
-          let savedRecord = await DbOperations.saveData(
-            ClinicPatient,
-            clinicPayload
-          );
-          // here we will add field with url and send due to hippa security on edit
-          const responseJotFormUrl = await jotFormLink(savedRecord._id);
-          let sendMessage = `Welcome again - Please filling out the form(note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
-          commonFunctions.sendTwilioMessage({
-            from: clinicLocationData.twilioNumber,
-            to: user.fullNumber,
-            body: sendMessage
-          });
-        }
-       } catch (error) {
-        console.log(error)
-       }
         if (!bodyPayload.deleteType) {
           throw {
             status: 400,
@@ -897,6 +847,57 @@ class CommonController {
             is_delete: true,
           });
         }
+        
+       try {
+        if (bodyPayload?.reschedule) {
+          const { start, end } = await commonFunctions.getUTCStartEndOfTheDay();
+          const clinicPayload = {
+            locationId: userData.locationId,
+            clinicId: userData.id,
+            patientId: payloadData.id,
+            submissionID: null,
+            visitDate: new Date(),
+            inQueue: false,
+          };
+          const [
+            clinicLocationData,
+            user,
+          ] = await Promise.all([
+            DbOperations.findOne(
+              locationSchema,
+              { _id: userData.locationId },
+              {},
+              { lean: true }
+            ),
+            DbOperations.findOne(User, { _id: payloadData.id }),
+          ]);
+          if (!clinicLocationData) {
+            throw new Error(commonFunctions.getErrorMessage("clinicNotFound"));
+          } else if (!clinicLocationData.twilioNumber) {
+            throw new Error(
+              commonFunctions.getErrorMessage("clinicContactNotFound")
+            );
+          }
+
+          const formatedDate = start.format("MM/DD/YYYY");
+          //let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${baseUrl}/patient/${locationId}/${patientID}`;
+
+          let savedRecord = await DbOperations.saveData(
+            ClinicPatient,
+            clinicPayload
+          );
+          // here we will add field with url and send due to hippa security on edit
+          const responseJotFormUrl = await jotFormLink(savedRecord._id);
+          let sendMessage = `Welcome again - Please filling out the form(note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
+          commonFunctions.sendTwilioMessage({
+            from: clinicLocationData.twilioNumber,
+            to: user.fullNumber,
+            body: sendMessage
+          });
+        }
+       } catch (error) {
+        console.log(error)
+       }
         io.sockets
           .to(`room_${userData.id}`)
           .emit("remove-patient", {
