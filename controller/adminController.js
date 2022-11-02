@@ -169,6 +169,29 @@ class AdminController {
             }
         })
     }
+    static async resetClientPassword(payload) {
+        return new Promise(async(resolve,reject) => {
+            try {
+                if(!payload) {
+                    throw {status:400, message:"Missing Require Parameter's"};
+                } 
+                if(!payload.client) {
+                    throw {status:400, message:"Missing Require Parameter: client"};
+                } 
+                if(!payload.password) {
+                    throw {status:400, message:"Missing Require Parameter: password"};
+                } 
+                const cryptedPassword = await commonFunctions.createHash(payload.password);
+                const data = {
+                    password: cryptedPassword,
+                }
+                await DbOperations.findAndUpdate(User, {_id: mongoose.Types.ObjectId(payload.client)}, data);
+                return resolve(true);
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
     static async addLocationJotform(payload) {
         return new Promise(async(resolve,reject) => {
             try {
