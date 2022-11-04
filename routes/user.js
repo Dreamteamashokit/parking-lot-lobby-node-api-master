@@ -32,8 +32,8 @@ router.post('/register',upload.single('avatar'), async (req,res, next) => {
 })
 router.post('/forgot', async (req,res, next) => {
     try {
-      let response = await UserController.forgot(req.body)
-      return res.status(201).send({status:true,statusCode:201, message: commonFunctions.getSuccessMessage('FORGOT') ,  data:response})
+      await UserController.forgot(req.body)
+      return res.status(201).send({status:true,statusCode:201, message: commonFunctions.getSuccessMessage('FORGOT')})
     } catch (err) {
       let message = err.message || 'Something went wrong';
       let statusCode = err.status || 500;
