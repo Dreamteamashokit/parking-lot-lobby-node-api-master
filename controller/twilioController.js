@@ -403,8 +403,8 @@ class TwilioController {
               User,
               {...userPayload, fullNumber: phoneNumber }
             );
-            clinicPayload['patientId'] = updatedUser._id;
           }
+          clinicPayload['patientId'] = updatedUser._id;
           let sendMessage = `${subPatientPayload.first_name} is Successfully added into your queue list`;
           if (clinicLocationData?.allowSmsFeature) {
             const sendPayload = {
@@ -696,19 +696,7 @@ class TwilioController {
           );
         }
         if (!clinicLocationData.isOpen) {
-          const { status, message } =
-            await commonFunctions.checkSettingAndUpdateMessage(
-              "companyOffAlert",
-              clinicId,
-              patientData,
-              locationId
-            );
-          const defaultMessage = "Please call our office number.";
-          const sendMessage = status ? message : defaultMessage;
-          return resolve({
-            reply: sendMessage,
-            isUpdate: false,
-          });
+          reject("Clinic is closed.<br/>Please call our office number.")
         }
         const clinicPayload = {
           locationId: locationId,

@@ -56,9 +56,13 @@ router.get('/jotform/:locationId', async function (req, res) {
     if(data?.url) {
       res.redirect(data.url)
     }
-    return res.send(data);
+    throw Error('Please call our office number.');
   } catch (error) {
-    return res.status(400).send({error: error.message || error});
+    // console.log(error);
+    // return res.status(400).send({error: error.message || error});
+    let html = '<head><style>body{font-family:arial;display:flex;align-items:center;line-height:1.5;justify-content:center;}</style></head>';
+    html = `<html>${html}<body><h1>${error?.message || error}</h1></body></html>`
+    return res.status(200).send(html);
   }
 })
 router.use(async function (req, res, next) {
