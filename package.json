@@ -30,6 +30,7 @@
     "rotating-file-stream": "^2.1.6",
     "socket.io": "^4.1.2",
     "string-format": "^2.0.0",
+    "stripe": "^11.1.0",
     "swagger-ui-express": "^4.1.6",
     "twilio": "^3.61.0",
     "underscore": "^1.13.1",

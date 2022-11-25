@@ -97,6 +97,16 @@ router.post("/reset-client-password", async (req,res)=> {
     return res.status(statusCode).send({status:false, statusCode:statusCode, message :message , data:{}})
   }
 });
+router.post("/client-membership", async (req,res)=> {
+  try {
+    await AdminController.clientMembership(req.body); // // req.userData => admin data
+    return res.status(200).send({status:true,statusCode:200,message: "update plan successfully"})
+  } catch(err) {
+    let statusCode = err.status || 500;
+    let message = err && err.message ? err.message : 'Something went wrong';
+    return res.status(statusCode).send({status:false, statusCode:statusCode, message :message , data:{}})
+  }
+});
 router.post("/add-location-jotform", async (req,res)=> {
   try {
     let response = await AdminController.addLocationJotform(req.body); // // req.userData => admin data

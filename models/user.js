@@ -22,6 +22,12 @@ var userSchema = Schema({
     onNameChangeRequest:{type:Date},
     forgotToken: {type: String},
     visitNotes:{type:String, default:null},
+    membership: {
+        plan: Number,
+        amount: Number,
+        validity: Date,
+    },
+    stripe: {type: String},
     isTextNotification :{type:Number, default:2, enum:[1,2]},  //1=> yes 2 => NO
     hasPatient:{type:Number, default:2, enum:[1,2]}, // 1=> YES, 2=> NO
     clinicId:{type:Schema.Types.ObjectId,ref:'user'},

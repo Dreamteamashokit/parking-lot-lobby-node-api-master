@@ -2052,16 +2052,17 @@ async function jotFormLink(patientId) {
     try {
       const host = process.env.API_URL || 'https://api.parkinglotlobby.com';
       const jotFormUrl = `${host}/jotform/${patientId}`;
-      const { status, message, short_response } =
-        await commonFunctions.shorterUrl(jotFormUrl);
-      if (!status) {
-        return resolve(encodeURI(jotFormUrl));
-      }
-      const short_url =
-        short_response && short_response.link
-          ? short_response.link
-          : jotFormUrl;
-      return resolve(encodeURI(short_url));
+      return resolve(encodeURI(jotFormUrl))
+      // const { status, message, short_response } =
+      //   await commonFunctions.shorterUrl(jotFormUrl);
+      // if (!status) {
+      //   return resolve(encodeURI(jotFormUrl));
+      // }
+      // const short_url =
+      //   short_response && short_response.link
+      //     ? short_response.link
+      //     : jotFormUrl;
+      // return resolve(encodeURI(short_url));
     } catch (err) {
       console.log("\n twilio jotform err:", err);
       return reject(err);
