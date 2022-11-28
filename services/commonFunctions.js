@@ -1140,45 +1140,46 @@ const getSubmission = (SID) => {
             if (response && response.hasOwnProperty('answers')) {
                 for (let [key, value] of Object.entries(response.answers)) {
                     if (value && value.hasOwnProperty('name')) {
-                        let fieldName = value.name;
-                        let qid = key;
-                        //console.log('\n qid:::', qid);
-                        switch (fieldName) {
-                            case 'insuranceCardUpdate':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'drivingLicenseFront':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'drivingLicenseBack':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'insuranceFront':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'insuranceBack':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'secondaryInsuranceFront':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'secondaryInsuranceBack':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'patientSecondaryInsuranceAdd':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            default:
-                                break;
+                        if (value?.type === 'control_fileupload' && value?.answer.length) {
+                            uploadArray.push(value?.answer[0]);
                         }
+                        //console.log('\n qid:::', qid);
+                        // switch (fieldName) {
+                        //     case 'insuranceCardUpdate':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'drivingLicenseFront':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'drivingLicenseBack':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'insuranceFront':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'insuranceBack':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'secondaryInsuranceFront':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'secondaryInsuranceBack':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'patientSecondaryInsuranceAdd':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     default:
+                        //         break;
+                        // }
                     }
                 }
             }
