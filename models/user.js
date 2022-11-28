@@ -4,7 +4,7 @@ const Schema  = mongoose.Schema
 var userSchema = Schema({
     first_name: {type: String},
     last_name: {type: String},
-    email: {type: String,lowercase: true,unique: true},
+    email: {type: String,lowercase: true,unique: false},
     password: {type: String},
     gender: {type: String,enum: ['1', '2', '3'],required: false}, // 1 => Male , 2 => Female
     dob: {type: Date,default: null},

@@ -23,7 +23,7 @@ router.get('/:id', async (req, res) => {
         const params = {
             clientPatientId: patient?._id,
             location_id: patient?.locationId,
-            phoneNumber: user.fullNumber,
+            ...(user?.fullNumber ? {phoneNumber: user.fullNumber} : {}),
         };
         const queryString = Object.keys(params).map(key => key + '=' + params[key]).join('&');
         const jotFormUrl = `${process.env.HIPPA_JOT_URL}/${jotformId}?${queryString}`

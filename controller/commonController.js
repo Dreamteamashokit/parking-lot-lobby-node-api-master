@@ -817,10 +817,10 @@ class CommonController {
               locationId: userData.locationId,
               clinicId: userData.id,
               visitDate: { $gte: new Date(start), $lte: new Date(end) },
-            }, 
-            {
-              is_delete: true,
-            }),
+            },
+              {
+                is_delete: true,
+              }),
           ]);
         } else if (bodyPayload.deleteType === 2) {
           await Promise.all([
@@ -834,9 +834,9 @@ class CommonController {
               locationId: userData.locationId,
               clinicId: userData.id,
             },
-            {
-              is_delete: true,
-            }),
+              {
+                is_delete: true,
+              }),
           ]);
         } else if (bodyPayload.deleteType === 3) {
           await DbOperations.findAndUpdate(ClinicPatient, {
@@ -847,6 +847,57 @@ class CommonController {
             is_delete: true,
           });
         }
+        
+       try {
+        if (bodyPayload?.reschedule) {
+          const { start, end } = await commonFunctions.getUTCStartEndOfTheDay();
+          const clinicPayload = {
+            locationId: userData.locationId,
+            clinicId: userData.id,
+            patientId: payloadData.id,
+            submissionID: null,
+            visitDate: new Date(),
+            inQueue: false,
+          };
+          const [
+            clinicLocationData,
+            user,
+          ] = await Promise.all([
+            DbOperations.findOne(
+              locationSchema,
+              { _id: userData.locationId },
+              {},
+              { lean: true }
+            ),
+            DbOperations.findOne(User, { _id: payloadData.id }),
+          ]);
+          if (!clinicLocationData) {
+            throw new Error(commonFunctions.getErrorMessage("clinicNotFound"));
+          } else if (!clinicLocationData.twilioNumber) {
+            throw new Error(
+              commonFunctions.getErrorMessage("clinicContactNotFound")
+            );
+          }
+
+          const formatedDate = start.format("MM/DD/YYYY");
+          //let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${baseUrl}/patient/${locationId}/${patientID}`;
+
+          let savedRecord = await DbOperations.saveData(
+            ClinicPatient,
+            clinicPayload
+          );
+          // here we will add field with url and send due to hippa security on edit
+          const responseJotFormUrl = await jotFormLink(savedRecord._id);
+          let sendMessage = `Welcome again - Please filling out the form(note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
+          commonFunctions.sendTwilioMessage({
+            from: clinicLocationData.twilioNumber,
+            to: user.fullNumber,
+            body: sendMessage
+          });
+        }
+       } catch (error) {
+        console.log(error)
+       }
         io.sockets
           .to(`room_${userData.id}`)
           .emit("remove-patient", {
@@ -1869,7 +1920,7 @@ async function getAttachmentFromUrl2(url) {
       data = await data.getBase64Async(jimp.MIME_JPEG);
       return resolve(data);
     } catch (err) {
-      console.log("\n error in getAttachmentFromUrl2:",  err);
+      console.log("\n error in getAttachmentFromUrl2:", err);
       return resolve(url + '?apikey=' + process.env.JOT_FORM_KEY);
     }
   });
@@ -1906,10 +1957,10 @@ async function submissionFormDynamic(response, submissionID, isPreview = false) 
           ans.prettyFormat = ans?.sublabels ? prettyFormat(ans) : ans.prettyFormat;
           ans['ans'] = ans?.type === 'control_fileupload' ? ans?.answer[0] : (ans?.prettyFormat || ans?.answer);
           ans['isLink'] = isValidHttpUrl(ans['ans'])
-          if(ans['isLink'] && !isPreview && ans['ans']) {
+          if (ans['isLink'] && !isPreview && ans['ans']) {
             ans['ans'] = getAttachmentFromUrl2(ans['ans'])
           }
-          if(ans['ans']) answers.push(ans);
+          if (ans['ans']) answers.push(ans);
         }
       }
       answers.sort((a, b) => Number(a.order) - Number(b.order))
@@ -1995,6 +2046,27 @@ function isValidHttpUrl(string) {
   }
 
   return url.protocol === "http:" || url.protocol === "https:";
+}
+async function jotFormLink(patientId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const host = process.env.API_URL || 'https://api.parkinglotlobby.com';
+      const jotFormUrl = `${host}/jotform/${patientId}`;
+      const { status, message, short_response } =
+        await commonFunctions.shorterUrl(jotFormUrl);
+      if (!status) {
+        return resolve(encodeURI(jotFormUrl));
+      }
+      const short_url =
+        short_response && short_response.link
+          ? short_response.link
+          : jotFormUrl;
+      return resolve(encodeURI(short_url));
+    } catch (err) {
+      console.log("\n twilio jotform err:", err);
+      return reject(err);
+    }
+  });
 }
 function diff_minutes(dt2, dt1) {
   return new Promise((resolve, reject) => {

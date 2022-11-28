@@ -241,6 +241,7 @@ class TwilioController {
         };
         let clientPatientId = null;
         let parentPatientId = null;
+        let phoneNumber = null;
 
         for (let [key, value] of Object.entries(questions)) {
           if (value && value.hasOwnProperty("name")) {
@@ -261,6 +262,9 @@ class TwilioController {
                   rowData[`q${qid}_patientName`]["first"];
                 userPayload["last_name"] =
                   rowData[`q${qid}_patientName`]["last"];
+                break;
+              case "phoneNumber":
+                phoneNumber = rowData[`q${qid}_phoneNumber`];
                 break;
               case "dateOfBirth":
                 if(rowData[`q${qid}_dateOfBirth`]) {
@@ -388,16 +392,23 @@ class TwilioController {
             { twilioNumber: 1, clinicId: 1, allowSmsFeature:1 },
             { lean: true }
           );
-          const updatedUser = await DbOperations.findOne(
+          let updatedUser = await DbOperations.findOne(
             User,
-            { _id: parentPatientData.patientId },
+            (parentPatientData?.patientId ? { _id: parentPatientData.patientId } : { fullNumber: phoneNumber }),
             {},
             { lean: true }
           );
+          if(!updatedUser) {
+            updatedUser = await DbOperations.saveData(
+              User,
+              {...userPayload, fullNumber: phoneNumber }
+            );
+          }
+          clinicPayload['patientId'] = updatedUser._id;
           let sendMessage = `${subPatientPayload.first_name} is Successfully added into your queue list`;
           if (clinicLocationData?.allowSmsFeature) {
             const sendPayload = {
-              to: updatedUser.fullNumber,
+              to: updatedUser?.fullNumber || phoneNumber,
               from: clinicLocationData.twilioNumber,
               body: sendMessage,
             };
@@ -468,6 +479,20 @@ class TwilioController {
             return reject({ message: "No patient found with submissionId." });
           }
           clinicPatient = clientPatientData;
+          
+          let updatedUser = await DbOperations.findOne(
+            User,
+            (clientPatientData?.patientId ? { _id: clientPatientData.patientId } : { fullNumber: phoneNumber }),
+            {},
+            { lean: true }
+          )
+          if(!updatedUser) {
+            updatedUser = await DbOperations.saveData(
+              User,
+              {...userPayload, fullNumber: phoneNumber }
+            );
+          }
+          clinicPayload['patientId'] = updatedUser._id;
           await Promise.all([
             await DbOperations.findAndUpdate(
               ClinicPatient,
@@ -480,22 +505,15 @@ class TwilioController {
             ),
             await DbOperations.findAndUpdate(
               User,
-              { _id: clientPatientData.patientId },
+              { _id: updatedUser._id },
               userPayload
             ),
           ]);
           const [
-            updatedUser,
             clinicSetting,
             clinicLocationData,
             uploaded_files,
           ] = await Promise.all([
-            DbOperations.findOne(
-              User,
-              { _id: clientPatientData.patientId },
-              {},
-              { lean: true }
-            ),
             DbOperations.findOne(
               settingSchema,
               { clinicId: clientPatientData.clinicId },
@@ -516,7 +534,7 @@ class TwilioController {
             clinicSetting.businessInformation.companyName
               ? clinicSetting.businessInformation.companyName
               : "Our business";
-          const userName = `${updatedUser.first_name} ${updatedUser.last_name}`;
+          const userName = `${userPayload.first_name} ${userPayload.last_name}`;
           let sendMessage = await commonFunctions.getReplyMessage(
             "submit_paperwork",
             0,
@@ -527,7 +545,7 @@ class TwilioController {
           );
           if (clinicLocationData?.allowSmsFeature) {
             const sendPayload = {
-              to: updatedUser.fullNumber,
+              to: updatedUser?.fullNumber || phoneNumber,
               from: clinicLocationData.twilioNumber,
               body: sendMessage,
             };
@@ -627,7 +645,7 @@ class TwilioController {
           } else {
             if (clinicLocationData?.allowSmsFeature) {
               const sendPayload = {
-                to: userData.fullNumber,
+                to: userData?.fullNumber || phoneNumber,
                 from: clinicLocationData.twilioNumber,
                 body: sendMessage,
               };
@@ -655,6 +673,48 @@ class TwilioController {
           }
           return reject(error);
         }
+      }
+    });
+  }
+  static async qrAppointment(locationId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const [clinicLocationData] = await Promise.all([
+          DbOperations.findOne(
+            locationSchema,
+            { _id: locationId },
+            {},
+            { lean: true }
+          ),
+        ]);
+
+        if (!clinicLocationData) {
+          throw new Error(commonFunctions.getErrorMessage("clinicNotFound"));
+        } else if (!clinicLocationData.twilioNumber) {
+          throw new Error(
+            commonFunctions.getErrorMessage("clinicContactNotFound")
+          );
+        }
+        if (!clinicLocationData.isOpen) {
+          reject("Clinic is closed.<br/>Please call our office number.")
+        }
+        const clinicPayload = {
+          locationId: locationId,
+          clinicId: clinicLocationData.clinicId,
+          submissionID: null,
+          visitDate: new Date(),
+          inQueue: false,
+        };
+        let savedRecord = await DbOperations.saveData(
+          ClinicPatient,
+          clinicPayload
+        );
+        const responseJotFormUrl = await jotFormSubmit(savedRecord._id);
+        return resolve({
+          url: responseJotFormUrl,
+        });
+      } catch (error) {
+        reject(error)
       }
     });
   }
@@ -955,10 +1015,7 @@ async function checkRequestedMessage(
             }
             // here we will add field with url and send due to hippa security on edit
             const responseJotFormUrl = await jotFormSubmit(
-              locationId,
               savedRecord._id,
-              clinicJotFormId,
-              patientData.fullNumber
             );
             let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
             // console.log("\n sendMessage:", sendMessage);
@@ -975,10 +1032,7 @@ async function checkRequestedMessage(
             logger.dump({path: 'twillio route: 890', body: clinicPayload, existClinicPatient})
             // here we will add field with url and send due to hippa security on edit
             const responseJotFormUrl = await jotFormSubmit(
-              locationId,
               existClinicPatient._id,
-              clinicJotFormId,
-              patientData.fullNumber
             );
             let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form (note that this link is only for todays date which is ${formatedDate}): ${responseJotFormUrl}`;
             // console.log("\n sendMessage:", sendMessage);
@@ -1010,7 +1064,7 @@ async function checkRequestedMessage(
   });
 }
 
-async function jotFormSubmit(locationId, patientId, JotFormId, fullNumber) {
+async function jotFormSubmit(patientId) {
   return new Promise(async (resolve, reject) => {
     try {
       // const encodedPatientNumber = encodeURIComponent("phoneNumber"),

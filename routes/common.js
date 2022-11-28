@@ -157,6 +157,9 @@ router.get('/download/:type',async (req,res) => {
       return res.send(data)
     }
     let image = await jimp.read(data);
+    if (mime === jimp.MIME_BMP) {
+      image = await image.scale(1024 / image.bitmap.height).background(0xFFFFFFFF);
+    }
     return res.send(await image.getBufferAsync(mime))
   } catch (err) {
     let message =(err && err.message) ? err.message : 'Something went wrong into our system. We will get back to you soonest.'

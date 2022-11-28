@@ -50,6 +50,21 @@ router.post('/jotNotification', upload.any(), async function (req, res) {
     return res.status(400).send({error: error.message || error});
   }
 })
+router.get('/jotform/:locationId', async function (req, res) {
+  try {
+    const data = await TwilioController.qrAppointment(req.params.locationId);
+    if(data?.url) {
+      res.redirect(data.url)
+    }
+    throw Error('Please call our office number.');
+  } catch (error) {
+    // console.log(error);
+    // return res.status(400).send({error: error.message || error});
+    let html = '<head><style>body{font-family:arial;display:flex;align-items:center;line-height:1.5;justify-content:center;}</style></head>';
+    html = `<html>${html}<body><h1>${error?.message || error}</h1></body></html>`
+    return res.status(200).send(html);
+  }
+})
 router.use(async function (req, res, next) {
   try {
     const authorization = req.header('Authorization');
