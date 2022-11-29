@@ -1221,7 +1221,7 @@ const shorterUrl = async (longUrl) => {
             return Promise.resolve({ status: false, message: 'Missing bitly basic configuration', short_response: {} });
         }
         const payload = {
-            "domain": "bit.ly",
+            "domain": "pll.wiki",
             "long_url": longUrl
         }
         const url = process.env.BITLY_URL;
