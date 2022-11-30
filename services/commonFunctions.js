@@ -1067,11 +1067,11 @@ const IsEmpty = (payload) => {
         }
     })
 }
-const getformatedStartEndDay = (date) => {
+const getformatedStartEndDay = (date, offset = 0) => {
     return new Promise(async (resolve, reject) => {
         try {
-            var start = moment(new Date(date)).utc().tz('America/New_York').startOf('day');
-            var end = moment(new Date(date)).utc().tz('America/New_York').endOf('day');
+            var start = moment(new Date(date)).utc().utcOffset(Number(offset)).startOf('day');
+            var end = moment(new Date(date)).utc().utcOffset(Number(offset)).endOf('day');
             return resolve({ start: start, end: end });
         } catch (err) {
             return reject(err);
