@@ -1,6 +1,6 @@
 import {User, Message,ClinicPatient,settingSchema, locationSchema, reviewSchema} from '../models';
 import {DbOperations, commonFunctions} from '../services';
-
+import moment from 'moment';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -703,15 +703,12 @@ class UserController {
         return new Promise(async (resolve,reject)=> {
             try {
                 await commonFunctions.checkUserInformation(userData);
-                const visitDate1 = new Date().toUTCString().substring(0, 16)
-                let {start,end} = await commonFunctions.getformatedStartEndDay(visitDate1); 
-                let visitDate ={ $gte: new Date(start), $lte: new Date(end)};
-                
-                if(payloadData.visitDate) {
-                    const visitDate2 = new Date(payloadData.visitDate).toUTCString().substring(0, 16)
-                    let {start,end} = await commonFunctions.getformatedStartEndDay(visitDate2); 
-                    visitDate ={ $gte: new Date(start), $lte: new Date(end)} ;
-                } 
+                let { start, end } = await commonFunctions.getformatedStartEndDay(
+                    payloadData?.visitDate ? payloadData.visitDate.substring(0, 16) : new Date(),
+                    payloadData?.timeOffset || 0
+                );
+                console.log({ start, end });
+                const visitDate = { $gte: new Date(start), $lte: new Date(end) };
                 const settings = await DbOperations.findOne(
                     settingSchema,
                     { clinicId: userData.id },
@@ -839,14 +836,9 @@ class UserController {
     static async visitorReviews(payloadData,userData) {
         return new Promise(async (resolve,reject)=> {
             try {
-                let {start,end} = await commonFunctions.getUTCStartEndOfTheDay(); 
-                let visitDate ={ $gte: new Date(start), $lte: new Date(end)};
-                
-                if(payloadData.visitDate) {
-                    let {start,end} = await commonFunctions.getformatedStartEndDay(payloadData.visitDate); 
-                    visitDate ={ $gte: new Date(start), $lte: new Date(end)} ;
-                } 
-                console.log("visitDate", visitDate);
+                let { start, end } = await commonFunctions.getformatedStartEndDay(payloadData?.visitDate || new Date(), payloadData?.timeOffset || 0);
+                visitDate = { $gte: new Date(start), $lte: new Date(end) };
+
                 const queryPayload = {
                     locationId: mongoose.Types.ObjectId(userData.locationId),
                     createdAt:visitDate                    
