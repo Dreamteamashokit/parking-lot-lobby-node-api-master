@@ -160,8 +160,8 @@ const getErrorMessage = (type) => {
 const getUTCStartEndOfTheDay = () => {
     return new Promise(async (resolve, reject) => {
         try {
-            var start = moment.utc().utcOffset('-0500').startOf('day');
-            var end = moment.utc().utcOffset('-0500').endOf('day');
+            var start = moment.utc().tz('America/New_York').startOf('day');
+            var end = moment.utc().tz('America/New_York').endOf('day');
             return resolve({ start: start, end: end });
         } catch (err) {
             return reject(err);
@@ -1067,11 +1067,11 @@ const IsEmpty = (payload) => {
         }
     })
 }
-const getformatedStartEndDay = (date) => {
+const getformatedStartEndDay = (date, offset = 0) => {
     return new Promise(async (resolve, reject) => {
         try {
-            var start = moment(new Date(date)).startOf('day');
-            var end = moment(new Date(date)).endOf('day');
+            var start = moment(new Date(date)).utc().utcOffset(Number(offset)).startOf('day');
+            var end = moment(new Date(date)).utc().utcOffset(Number(offset)).endOf('day');
             return resolve({ start: start, end: end });
         } catch (err) {
             return reject(err);
@@ -1140,45 +1140,46 @@ const getSubmission = (SID) => {
             if (response && response.hasOwnProperty('answers')) {
                 for (let [key, value] of Object.entries(response.answers)) {
                     if (value && value.hasOwnProperty('name')) {
-                        let fieldName = value.name;
-                        let qid = key;
-                        //console.log('\n qid:::', qid);
-                        switch (fieldName) {
-                            case 'insuranceCardUpdate':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'drivingLicenseFront':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'drivingLicenseBack':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'insuranceFront':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'insuranceBack':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'secondaryInsuranceFront':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'secondaryInsuranceBack':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            case 'patientSecondaryInsuranceAdd':
-                                if (value.answer && value.answer !== 'NO')
-                                    uploadArray.push(value.answer);
-                                break;
-                            default:
-                                break;
+                        if (value?.type === 'control_fileupload' && value?.answer.length) {
+                            uploadArray.push(value?.answer[0]);
                         }
+                        //console.log('\n qid:::', qid);
+                        // switch (fieldName) {
+                        //     case 'insuranceCardUpdate':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'drivingLicenseFront':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'drivingLicenseBack':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'insuranceFront':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'insuranceBack':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'secondaryInsuranceFront':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'secondaryInsuranceBack':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     case 'patientSecondaryInsuranceAdd':
+                        //         if (value.answer && value.answer !== 'NO')
+                        //             uploadArray.push(value.answer);
+                        //         break;
+                        //     default:
+                        //         break;
+                        // }
                     }
                 }
             }
@@ -1220,7 +1221,7 @@ const shorterUrl = async (longUrl) => {
             return Promise.resolve({ status: false, message: 'Missing bitly basic configuration', short_response: {} });
         }
         const payload = {
-            "domain": "bit.ly",
+            "domain": "pll.wiki",
             "long_url": longUrl
         }
         const url = process.env.BITLY_URL;
