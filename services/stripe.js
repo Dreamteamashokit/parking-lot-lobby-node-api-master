@@ -42,6 +42,18 @@ module.exports = {
             }
         })
     },
+    removeCard: (clientId, source) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const client = await getClient(clientId);
+                const data = await stripe.customers.deleteSource(client.stripe, source);
+                resolve(data);
+            } catch (error) {
+                console.log(error)
+                reject(error);
+            }
+        })
+    },
     getCards: async (clientId) => {
         try {
             const client = await getClient(clientId);
