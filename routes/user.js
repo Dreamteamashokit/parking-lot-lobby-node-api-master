@@ -215,6 +215,16 @@ router.post('/pay/card', async (req, res) => {
     res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
   }
 })
+router.delete('/pay/card/:source', async (req, res) => {
+  try {
+    let response = await UserController.removeCard(req.params, req.userData)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
 router.post('/updateAdditionalSettings', async (req,res, next) => {
   try {
     let response = await UserController.updateAdditionalSettings(req.body, req.userData)

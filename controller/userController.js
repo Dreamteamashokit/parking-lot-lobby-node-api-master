@@ -258,6 +258,17 @@ class UserController {
         })
     }
 
+    static async removeCard(payloadData, userData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                resolve(await stripe.removeCard(userData.id, payloadData.source));
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
     static async updateBusinessInformation(payloadData ,userData, fileData) {
         return new Promise(async(resolve,reject)=> {
             try {
