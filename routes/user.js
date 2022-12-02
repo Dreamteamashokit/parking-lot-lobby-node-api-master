@@ -165,6 +165,66 @@ router.post('/updateAlertSettings', async (req,res, next) => {
     res.status(statusCode).send({status:false,statusCode:statusCode, message :message , data:err})
   }
 })
+router.get('/plan', async (req, res) => {
+  try {
+    let response = await UserController.plan(req.userData)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
+router.post('/updateCard', async (req, res) => {
+  try {
+    let response = await UserController.cardUpdate(req.body, req.userData)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
+router.post('/pay/membership', async (req, res) => {
+  try {
+    let response = await UserController.payMembership(req.userData, req.body)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
+router.get('/pay/cards', async (req, res) => {
+  try {
+    let response = await UserController.getCards(req.userData)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
+router.post('/pay/card', async (req, res) => {
+  try {
+    let response = await UserController.addCard(req.body, req.userData)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
+router.delete('/pay/card/:source', async (req, res) => {
+  try {
+    let response = await UserController.removeCard(req.params, req.userData)
+    return res.status(200).send({ status: true, data: response })
+  } catch (err) {
+    let message = err.message || 'Something went wrong';
+    let statusCode = err.status || 500;
+    res.status(statusCode).send({ status: false, statusCode: statusCode, message: message, data: err })
+  }
+})
 router.post('/updateAdditionalSettings', async (req,res, next) => {
   try {
     let response = await UserController.updateAdditionalSettings(req.body, req.userData)

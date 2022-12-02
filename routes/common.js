@@ -45,10 +45,11 @@ router.get('/test2',async (req,res) => {
     const data = await DbOperations.findAll(
       User,
       { 
-        createdAt: {
-          '$gte': new Date('2022-9-1'),
-          // '$lte': new Date(2022, 9, 09)
-        }
+        userType: 1,
+        // createdAt: {
+        //   '$gte': new Date('2022-9-1'),
+        //   // '$lte': new Date(2022, 9, 09)
+        // }
       },
       {},
       {}

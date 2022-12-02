@@ -1075,18 +1075,19 @@ async function jotFormSubmit(patientId) {
       const host = process.env.API_URL || 'https://api.parkinglotlobby.com';
       const jotFormUrl = `${host}/jotform/${patientId}`;
       logger.dump({path: 'twillio controller: 934', jotFormUrl})
-      const { status, message, short_response } =
-        await commonFunctions.shorterUrl(jotFormUrl);
-      if (!status) {
-        // console.log("when bitly no status:", message);
-        return resolve(encodeURI(jotFormUrl));
-      }
-      // console.log("\n\n when bitly status :", short_response);
-      const short_url =
-        short_response && short_response.link
-          ? short_response.link
-          : jotFormUrl;
-      return resolve(encodeURI(short_url));
+      return resolve(encodeURI(jotFormUrl));
+      // const { status, message, short_response } =
+      //   await commonFunctions.shorterUrl(jotFormUrl);
+      // if (!status) {
+      //   // console.log("when bitly no status:", message);
+      //   return resolve(encodeURI(jotFormUrl));
+      // }
+      // // console.log("\n\n when bitly status :", short_response);
+      // const short_url =
+      //   short_response && short_response.link
+      //     ? short_response.link
+      //     : jotFormUrl;
+      // return resolve(encodeURI(short_url));
     } catch (err) {
       logger.error({path: 'twillio controller 946', jotFormUrl, error: err.message || err})
       console.log("\n twilio jotform err:", err);

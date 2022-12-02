@@ -1,6 +1,6 @@
-import {User, Message,ClinicPatient,settingSchema, locationSchema, reviewSchema} from '../models';
-import {DbOperations, commonFunctions} from '../services';
-import moment from 'moment';
+import {User, Message,ClinicPatient,settingSchema, locationSchema, reviewSchema, cardSchema} from '../models';
+import {DbOperations, commonFunctions, stripe} from '../services';
+
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -186,6 +186,89 @@ class UserController {
         })
         
     }
+
+    static async cardUpdate(payloadData, userData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+
+                const criteria = {
+                    user: userData.id
+                }
+                const card = await DbOperations.findOne(cardSchema, criteria, {}, {});
+                if (card) {
+                    await DbOperations.findAndUpdate(cardSchema, criteria, payloadData, { new: true });
+                } else {
+                    await DbOperations.saveData(cardSchema, { ...payloadData, ...criteria });
+                }
+                resolve(true);
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
+    static async plan(userData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                const user = await DbOperations.findOne(User, { _id: userData.id }, {}, {lean: true});
+                let isActive = false;
+                if (user.membership.validity) {
+                    isActive = new Date(user.membership.validity) > new Date();
+                }
+                resolve({ ...user.membership, isActive });
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
+    static async payMembership(userData, payload) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                const data = await stripe.chargeClient(userData.id, payload.source);
+                resolve(data);
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
+    static async getCards(userData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                resolve(await stripe.getCards(userData.id));
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
+    static async addCard(payloadData, userData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                resolve(await stripe.addCard(userData.id, payloadData));
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
+    static async removeCard(payloadData, userData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await commonFunctions.checkUserInformation(userData);
+                resolve(await stripe.removeCard(userData.id, payloadData.source));
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+
     static async updateBusinessInformation(payloadData ,userData, fileData) {
         return new Promise(async(resolve,reject)=> {
             try {

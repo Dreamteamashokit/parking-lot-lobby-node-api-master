@@ -66,6 +66,7 @@ class AdminController {
                     limit: parseInt(payload.limit) || 10,
                 };
                 const selection = {
+                    membership:1,
                     email:1,
                     createdAt:1,
                     updatedAt:1,
@@ -186,6 +187,29 @@ class AdminController {
                     password: cryptedPassword,
                 }
                 await DbOperations.findAndUpdate(User, {_id: mongoose.Types.ObjectId(payload.client)}, data);
+                return resolve(true);
+            } catch (err) {
+                return reject(err);
+            }
+        })
+    }
+    static async clientMembership(payload) {
+        return new Promise(async(resolve,reject) => {
+            try {
+                const client = await DbOperations.findOne(User, {_id: mongoose.Types.ObjectId(payload.client)}, {}, {});
+                if(!payload) {
+                    throw {status:400, message:"Missing Require Parameter's"};
+                } 
+                if(!payload.client) {
+                    throw {status:400, message:"Missing Require Parameter: client"};
+                } 
+                if(payload.plan) {
+                    client['membership']['plan'] = Number(payload.plan);
+                }
+                if(payload.amount) {
+                    client['membership']['amount'] = Number(payload.amount);
+                }
+                await client.save();
                 return resolve(true);
             } catch (err) {
                 return reject(err);
