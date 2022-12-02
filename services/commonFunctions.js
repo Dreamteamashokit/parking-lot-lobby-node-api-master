@@ -1070,8 +1070,8 @@ const IsEmpty = (payload) => {
 const getformatedStartEndDay = (date, offset = 0) => {
     return new Promise(async (resolve, reject) => {
         try {
-            var start = moment(new Date(date)).utc().utcOffset(Number(offset)).startOf('day');
-            var end = moment(new Date(date)).utc().utcOffset(Number(offset)).endOf('day');
+            var start = moment(new Date(date)).utc().utcOffset(Number(offset), true).startOf('day');
+            var end = moment(new Date(date)).utc().utcOffset(Number(offset), true).endOf('day');
             return resolve({ start: start, end: end });
         } catch (err) {
             return reject(err);
