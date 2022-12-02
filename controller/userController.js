@@ -214,7 +214,7 @@ class UserController {
                 await commonFunctions.checkUserInformation(userData);
                 const user = await DbOperations.findOne(User, { _id: userData.id }, {}, {lean: true});
                 let isActive = false;
-                if (user.membership.validity) {
+                if (user.membership?.validity) {
                     isActive = new Date(user.membership.validity) > new Date();
                 }
                 resolve({ ...user.membership, isActive });
