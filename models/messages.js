@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 const Schema  = mongoose.Schema;
 var messageSchema = Schema({
     content:{type:String,default:''},
+    media:{type:[String],default:[]},
     message_status:{type: Boolean, default: false},
     initial_message:{type:Boolean,default:false},
     isReadByAdmin:{type:Boolean, default:false},
