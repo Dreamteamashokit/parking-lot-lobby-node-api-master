@@ -10,6 +10,7 @@ import sgMail from '@sendgrid/mail';
 import * as jotform from 'jotform';
 import _ from 'underscore';
 import * as fs from 'fs';
+import * as mime from 'mime';
 
 import * as PDFDocument from 'html-pdf';
 import axios from "axios";
@@ -207,7 +208,8 @@ const sendTwilioMessage = async (payloadData) => {
                 twillioClient.messages.create({
                     to: payloadData.to,
                     from: payloadData.from,
-                    body: payloadData.body,
+                    body: payloadData?.body || undefined,
+                    mediaUrl: payloadData?.mediaUrl || undefined,
                 })
                     .then(message => {
                         console.log("send twilio message:", message.sid);
@@ -362,7 +364,7 @@ const getCountForWaitingList = (clinicId = null, patientId = null, locationId = 
         }
     })
 }
-const updateMessage = (locationId = null, clinicId = null, patientId = null, content = '', type = 2, isTwilio = false) => {
+const updateMessage = (locationId = null, clinicId = null, patientId = null, content = '', type = 2, isTwilio = false, media = []) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (!locationId || !clinicId || !patientId) {
@@ -374,6 +376,7 @@ const updateMessage = (locationId = null, clinicId = null, patientId = null, con
                 clinicId: clinicId,
                 locationId: locationId,
                 type: type,
+                media,
                 twilioSend: isTwilio
             }
             if (type === 2) {
@@ -1243,6 +1246,28 @@ const shorterUrl = async (longUrl) => {
         return Promise.resolve({ status: false, message: message, short_response: {} });
     }
 }
+const saveSmsMedia = async (dataString) => {
+    const matches = dataString.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+
+    if (matches.length !== 3) {
+        return new Error('Invalid input string');
+    }
+    const dataBuffer = new Buffer.from(matches[2], 'base64');
+    const uniqueStr = Date.now().toString(36) + (Math.random() * (9999 - 1000) + 1000).toString(26)
+    const fileName = `${uniqueStr}.${mime.getExtension(matches[1])}`;
+    try {
+        await fs.promises.mkdir("public/images/mms/", { recursive: true });
+        await fs.writeFileSync("public/images/mms/" + fileName, dataBuffer, {encoding: 'utf8'});
+        return fileName;
+    }
+    catch (err) {
+        console.error(err)
+    }
+    return '';
+}
+const getSmsMediaUrl = (fileName) => {
+    return `${process.env.API_URL}/images/mms/${fileName}`;
+}
 const addAdmin = async () => {
     return new Promise(async (resolve) => {
         try {
@@ -1326,6 +1351,8 @@ const commonFunctions = {
     subtractMinutes,
     syncFormSubmissions,
     tracer,
+    saveSmsMedia,
+    getSmsMediaUrl,
     getWeekMonthYearStartEnd
 }
 

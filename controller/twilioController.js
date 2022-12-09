@@ -156,7 +156,7 @@ class TwilioController {
             message: commonFunctions.getErrorMessage("patientIdNotExist"),
           };
         }
-        if (!payloadData.message) {
+        if (payloadData?.message === undefined) {
           throw { status: 400, message: "Missing required parameter: message" };
         }
         const patientPhoneNumber = await DbOperations.findOne(
@@ -182,11 +182,16 @@ class TwilioController {
             "This clinic location has not any messages number.Contact to Admin."
           );
         }
+        let smsMediaFile = [];
+        if(payloadData?.media) {
+          smsMediaFile.push(await commonFunctions.saveSmsMedia(payloadData.media));
+        }
         if (clinicLocationData?.allowSmsFeature) {
           const sendPayload = {
             to: patientPhoneNumber.fullNumber,
             from: clinicLocationData.twilioNumber,
             body: payloadData.message,
+            mediaUrl: smsMediaFile.length ? smsMediaFile.map(file=> commonFunctions.getSmsMediaUrl(file)) : undefined,
           };
           await commonFunctions.sendTwilioMessage(sendPayload);
           const response = await commonFunctions.updateMessage(
@@ -195,9 +200,11 @@ class TwilioController {
             payloadData.patientId,
             payloadData.message,
             2,
-            true
+            true,
+            smsMediaFile,
           );
-          return resolve(response);
+          const media = (response?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name), isImage: ['png', 'jpg', 'jpeg', 'gif'].includes(name.split('.').pop()) }))
+          return resolve({...response._doc, media});
         } else {
           const response = await commonFunctions.updateMessage(
             clinicLocationData._id,
@@ -205,9 +212,11 @@ class TwilioController {
             payloadData.patientId,
             payloadData.message,
             2,
-            false
+            false,
+            smsMediaFile,
           );
-          return resolve(response);
+          const media = (response?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name), isImage: ['png', 'jpg', 'jpeg', 'gif'].includes(name.split('.').pop()) }))
+          return resolve({...response._doc, media});
         }
       } catch (err) {
         console.log("\n error in controller:", err);

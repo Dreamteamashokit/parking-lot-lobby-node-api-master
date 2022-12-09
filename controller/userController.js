@@ -904,7 +904,8 @@ class UserController {
                         "coronavirusContact":1,
                         "submissionID":1
                     }
-                    }
+                    },
+                    { $sort: { inQueueAt: -1 } }
                 );
                 const patientList=await DbOperations.aggregateData(ClinicPatient,aggregate);
                 for (const p of patientList) {

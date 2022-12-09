@@ -313,7 +313,7 @@ class CommonController {
               subPatientData: "$subPatientData",
             },
           },
-          { $sort: { inQueueAt: 1 } }
+          { $sort: { inQueueAt: -1 } }
         );
         const existClinicPatient = await DbOperations.aggregateData(
           ClinicPatient,
@@ -378,6 +378,9 @@ class CommonController {
           { lean: true },
           []
         );
+        messages.forEach(msg => {
+          msg['media'] = (msg?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name), isImage: ['png', 'jpg', 'jpeg', 'gif'].includes(name.split('.').pop()) }))
+        })
         return resolve(messages);
       } catch (err) {
         console.log("\n error in fetchPatientChat:", err.message || err);
