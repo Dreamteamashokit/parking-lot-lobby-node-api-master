@@ -203,7 +203,8 @@ class TwilioController {
             true,
             smsMediaFile,
           );
-          return resolve(response);
+          const media = (response?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name), isImage: ['png', 'jpg', 'jpeg', 'gif'].includes(name.split('.').pop()) }))
+          return resolve({...response._doc, media});
         } else {
           const response = await commonFunctions.updateMessage(
             clinicLocationData._id,
@@ -214,7 +215,8 @@ class TwilioController {
             false,
             smsMediaFile,
           );
-          return resolve(response);
+          const media = (response?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name), isImage: ['png', 'jpg', 'jpeg', 'gif'].includes(name.split('.').pop()) }))
+          return resolve({...response._doc, media});
         }
       } catch (err) {
         console.log("\n error in controller:", err);

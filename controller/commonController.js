@@ -379,7 +379,7 @@ class CommonController {
           []
         );
         messages.forEach(msg => {
-          msg['media'] = (msg?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name) }))
+          msg['media'] = (msg?.media || []).map(name => ({ name, link: commonFunctions.getSmsMediaUrl(name), isImage: ['png', 'jpg', 'jpeg', 'gif'].includes(name.split('.').pop()) }))
         })
         return resolve(messages);
       } catch (err) {
