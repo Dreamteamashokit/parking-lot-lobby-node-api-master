@@ -960,7 +960,7 @@ class UserController {
         return new Promise(async (resolve,reject)=> {
             try {
                 let { start, end } = await commonFunctions.getformatedStartEndDay(payloadData?.visitDate || new Date(), payloadData?.timeOffset || 0);
-                visitDate = { $gte: new Date(start), $lte: new Date(end) };
+                const visitDate = { $gte: new Date(start), $lte: new Date(end) };
 
                 const queryPayload = {
                     locationId: mongoose.Types.ObjectId(userData.locationId),
