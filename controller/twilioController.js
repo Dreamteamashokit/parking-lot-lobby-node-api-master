@@ -156,9 +156,6 @@ class TwilioController {
             message: commonFunctions.getErrorMessage("patientIdNotExist"),
           };
         }
-        if (payloadData?.message === undefined) {
-          throw { status: 400, message: "Missing required parameter: message" };
-        }
         const patientPhoneNumber = await DbOperations.findOne(
           User,
           { _id: payloadData.patientId, userType: 2 },

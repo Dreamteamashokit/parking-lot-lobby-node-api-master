@@ -301,6 +301,17 @@ router.put('/updatePatientInfo', async(req,res)=> {
     return res.status(statusCode).send({status:false,statusCode:statusCode,message:message, actualMessage:actualMessage});
   }
 })
+router.get('/user-list', async (req,res) => {
+  try {
+    await commonFunctions.verifyLocationId(req.userData);
+    const response = await UserController.userList(req.query);
+    return res.status(200).send({status:true, message: 'fetch data Successfully' ,  data:response})
+  } catch (err) {
+    let message =(err && err.message) ? err.message : commonFunctions.getErrorMessage('somethingWrongElse');
+    let statusCode = (err && err.status) ? err.status : 500;
+    return res.status(statusCode).send({status:false,statusCode:statusCode,message:message, actualMessage:message});
+  }
+})
 router.get('/visitor-list', async (req,res) => {
   try {
     await commonFunctions.verifyLocationId(req.userData);
