@@ -1257,18 +1257,22 @@ function deleteMediaItem(mediaItem) {
 async function SaveMmsMedia(mediaItem) {
     const { mediaUrl, mediaSid, contentType } = mediaItem;
     const fileName = `${mediaSid}.${mime.getExtension(contentType)}`;
-    const fullPath = path.resolve(`public/images/mms/${fileName}`);
+    const fullPath = `public/images/mms/${fileName}`;
 
     if (!fs.existsSync(fullPath)) {
-        const response = await fetch(mediaUrl);
+        const response = await axios({
+            method: 'get',
+            url: mediaUrl,
+            responseType: 'stream',
+        });
         const fileStream = fs.createWriteStream(fullPath);
 
-        response.body.pipe(fileStream);
+        response.data.pipe(fileStream);
 
         deleteMediaItem(mediaItem);
     }
 
-    return filename;
+    return fileName;
 }
 const saveSmsMedia = async (dataString) => {
     const matches = dataString.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);

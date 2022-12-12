@@ -27,6 +27,7 @@ router.post('/sms', async function(req, res, next) {
     res.writeHead(200, {'Content-Type': 'text/xml'});
     res.end(twiml.toString());
   } catch (err) {
+    logger.error({body: req.body, error: err.message || err})
     let message =(err && err.message) ? err.message : commonFunctions.getErrorMessage('somethingWrongElse');
     let statusCode = (err && err.status) ? err.status : 500;
     twiml.message(message);

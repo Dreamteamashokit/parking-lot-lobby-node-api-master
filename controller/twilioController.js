@@ -28,10 +28,10 @@ class TwilioController {
           const contentType = payloadData[`MediaContentType${i}`];
           const mediaSid = path.basename(urlUtil.parse(mediaUrl).pathname);
     
-          mediaItems.push({ mediaSid, MessageSid, mediaUrl, contentType });
-          saveOperations = mediaItems.map(mediaItem => commonFunctions.SaveMmsMedia(mediaItem));
+          const mediaItem = { mediaSid, MessageSid, mediaUrl, contentType };
+          saveOperations.push(commonFunctions.SaveMmsMedia(mediaItem))
         }
-        await Promise.all(saveOperations);
+        saveOperations = await Promise.all(saveOperations);
         const locationExist = await DbOperations.findOne(
           locationSchema,
           { twilioNumber: payloadData.To },
