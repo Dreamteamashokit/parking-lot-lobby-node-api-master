@@ -1246,6 +1246,34 @@ const shorterUrl = async (longUrl) => {
         return Promise.resolve({ status: false, message: message, short_response: {} });
     }
 }
+function deleteMediaItem(mediaItem) {
+    const client = Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+    return client
+      .api.accounts(process.env.TWILIO_ACCOUNT_SID)
+      .messages(mediaItem.MessageSid)
+      .media(mediaItem.mediaSid).remove();
+}
+async function SaveMmsMedia(mediaItem) {
+    const { mediaUrl, mediaSid, contentType } = mediaItem;
+    const fileName = `${mediaSid}.${mime.getExtension(contentType)}`;
+    const fullPath = `public/images/mms/${fileName}`;
+
+    if (!fs.existsSync(fullPath)) {
+        const response = await axios({
+            method: 'get',
+            url: mediaUrl,
+            responseType: 'stream',
+        });
+        const fileStream = fs.createWriteStream(fullPath);
+
+        response.data.pipe(fileStream);
+
+        deleteMediaItem(mediaItem);
+    }
+
+    return fileName;
+}
 const saveSmsMedia = async (dataString) => {
     const matches = dataString.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
 
@@ -1351,6 +1379,7 @@ const commonFunctions = {
     subtractMinutes,
     syncFormSubmissions,
     tracer,
+    SaveMmsMedia,
     saveSmsMedia,
     getSmsMediaUrl,
     getWeekMonthYearStartEnd

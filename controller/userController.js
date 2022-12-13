@@ -782,6 +782,45 @@ class UserController {
         })
         
     }
+    static async userList(payloadData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { page = 1, limit = 10, search } = payloadData;
+                const condition = {
+                    userType: 2,
+                    is_deleted: { $ne: true },
+                        $or: [
+                            {
+                                "$expr": {
+                                    "$regexMatch": {
+                                        "input": { "$concat": ["$first_name", " ", "$last_name"] },
+                                        "regex": search,  //Your text search here
+                                        "options": "i"
+                                    }
+                                }
+                            },
+                            {
+                                fullNumber: {
+                                    $regex: search,
+                                    '$options': 'i'
+                                }
+                            },
+                            {
+                                email: {
+                                    $regex: search,
+                                    '$options': 'i'
+                                }
+                            },
+                        ]
+                }
+                const data = await DbOperations.findAll(User, condition, null, { limit: +limit, skip: (page - 1) * limit });
+                const total = await DbOperations.count(User, condition);
+                return resolve({ data, total, page: +page, limit: +limit });
+            } catch (err) {
+                return reject(err);
+            }
+        });
+    }
     static async visitorList(payloadData,userData) {
         return new Promise(async (resolve,reject)=> {
             try {
@@ -921,7 +960,7 @@ class UserController {
         return new Promise(async (resolve,reject)=> {
             try {
                 let { start, end } = await commonFunctions.getformatedStartEndDay(payloadData?.visitDate || new Date(), payloadData?.timeOffset || 0);
-                visitDate = { $gte: new Date(start), $lte: new Date(end) };
+                const visitDate = { $gte: new Date(start), $lte: new Date(end) };
 
                 const queryPayload = {
                     locationId: mongoose.Types.ObjectId(userData.locationId),

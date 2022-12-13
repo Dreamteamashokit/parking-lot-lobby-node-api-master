@@ -8,6 +8,8 @@ import {
   SubPatientSchema,
 } from "../models";
 import { DbOperations, commonFunctions, logger } from "../services";
+import * as urlUtil from 'url';
+import * as path from 'path';
 
 if (!process.env.HIPPA_JOT_URL) {
   throw new Error("Missing enviornment variable: HIPPA_JOT_URL");
@@ -19,6 +21,17 @@ class TwilioController {
         if (!payloadData.From) {
           throw { status: 400, message: "Missing your phone number." };
         }
+        const { NumMedia, MessageSid } = payloadData;
+        let saveOperations = [];
+        for (var i = 0; i < NumMedia; i++) {  // eslint-disable-line
+          const mediaUrl = payloadData[`MediaUrl${i}`];
+          const contentType = payloadData[`MediaContentType${i}`];
+          const mediaSid = path.basename(urlUtil.parse(mediaUrl).pathname);
+    
+          const mediaItem = { mediaSid, MessageSid, mediaUrl, contentType };
+          saveOperations.push(commonFunctions.SaveMmsMedia(mediaItem))
+        }
+        saveOperations = await Promise.all(saveOperations);
         const locationExist = await DbOperations.findOne(
           locationSchema,
           { twilioNumber: payloadData.To },
@@ -63,7 +76,9 @@ class TwilioController {
             locationExist.clinicId,
             response._id,
             message_body,
-            1
+            1,
+            false,
+            saveOperations
           );
           // Note:- checkMessageBodyCase function replace with checkRequestedMessage for new flow
           const { reply, isUpdate } = await checkRequestedMessage(
@@ -90,7 +105,9 @@ class TwilioController {
               locationExist.clinicId,
               response._id,
               reply,
-              2
+              2,
+              false,
+              saveOperations
             );
 
           return resolve(reply);
@@ -108,7 +125,9 @@ class TwilioController {
             locationExist.clinicId,
             checkPhoneExist._id,
             message_body,
-            1
+            1,
+            false,
+            saveOperations,
           );
           // Note:- checkMessageBodyCase function replace with checkRequestedMessage for new flow
           const { reply, isUpdate } = await checkRequestedMessage(
@@ -135,7 +154,9 @@ class TwilioController {
               locationExist.clinicId,
               checkPhoneExist._id,
               reply,
-              2
+              2,
+              false,
+              saveOperations
             );
 
           return resolve(reply);
@@ -155,9 +176,6 @@ class TwilioController {
             status: 400,
             message: commonFunctions.getErrorMessage("patientIdNotExist"),
           };
-        }
-        if (payloadData?.message === undefined) {
-          throw { status: 400, message: "Missing required parameter: message" };
         }
         const patientPhoneNumber = await DbOperations.findOne(
           User,
