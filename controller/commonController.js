@@ -1166,6 +1166,23 @@ class CommonController {
         if (payloadData.parkingSpot) {
           payloadClinicPatient["parkingSpot"] = payloadData.parkingSpot;
         }
+        if (payloadData.visitDate) {
+          payloadClinicPatient["visitDate"] = new Date(payloadData.visitDate);
+        }
+        
+        let clinicFormId = await commonFunctions.fetchJotformId(
+          userData.locationId
+        ); // '212500804377046';
+        let submissionId = await jotFormSubmit(
+          payloadData,
+          clinicFormId,
+          payloadData.fullNumber,
+          userData.locationId
+        );
+        if (submissionId) {
+          payloadClinicPatient["submissionID"] = submissionId;
+        }
+        
         await DbOperations.saveData(ClinicPatient, payloadClinicPatient);
         io.sockets
           .to(`room_${userData.id}`)
@@ -1175,15 +1192,6 @@ class CommonController {
             locationId: userData.locationId,
           });
 
-        let clinicFormId = await commonFunctions.fetchJotformId(
-          userData.locationId
-        ); // '212500804377046';
-        await jotFormSubmit(
-          payloadData,
-          clinicFormId,
-          payloadData.fullNumber,
-          userData.locationId
-        );
         let userName = `${payloadData.first_name} ${payloadData.last_name}`;
         const settingMessageType = "confirmationAlert";
         const { status, message, count, totalCount, businessName } =
