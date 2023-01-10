@@ -26,6 +26,7 @@ var userSchema = Schema({
         plan: Number,
         amount: Number,
         validity: Date,
+        isAutoPayEnable: {type: Boolean,default: false}
     },
     stripe: {type: String},
     isTextNotification :{type:Number, default:2, enum:[1,2]},  //1=> yes 2 => NO

@@ -1,6 +1,7 @@
-import {DbOperations, commonFunctions} from '../services';
+import {DbOperations, commonFunctions, stripe} from '../services';
 import {User, locationSchema, jotformSchema, settingSchema, Message, ClinicPatient} from '../models';
 var mongoose = require('mongoose');
+import moment from "moment";
 
 class AdminController {
     static async login(payloadData) {
@@ -196,6 +197,8 @@ class AdminController {
     static async clientMembership(payload) {
         return new Promise(async(resolve,reject) => {
             try {
+                console.log('line 199 clientMembership controller');
+                console.log(payload);
                 const client = await DbOperations.findOne(User, {_id: mongoose.Types.ObjectId(payload.client)}, {}, {});
                 if(!payload) {
                     throw {status:400, message:"Missing Require Parameter's"};
@@ -209,7 +212,10 @@ class AdminController {
                 if(payload.amount) {
                     client['membership']['amount'] = Number(payload.amount);
                 }
+                client['membership']['isAutoPayEnable'] = payload.isAutoPayEnable?payload.isAutoPayEnable:false;
+                
                 await client.save();
+                //await autoPayMembershipPlan();
                 return resolve(true);
             } catch (err) {
                 return reject(err);
@@ -473,6 +479,43 @@ class AdminController {
                 return reject(err);
             }
         })
+    }
+    static async autoPayMembershipPlan(){
+        return new Promise(async(resolve,reject)=>{
+            try{
+                let updatedData=[];
+                const clientData = await DbOperations.findAll(
+                    User,
+                    { 'membership.isAutoPayEnable' : true, is_deleted : false },
+                    {},
+                    { lean: true }
+                );
+                
+                let currentDate = new Date();
+                for(const clientInfo of clientData ){
+                    if(clientInfo.membership.validity){
+                        console.log(clientInfo);
+                        let validityDate = new Date(clientInfo.membership.validity);
+                        console.log(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy"));
+                        if(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy")){
+                            await commonFunctions.checkUserInformation(clientInfo);
+                            let cardDetails = await stripe.getCards(clientInfo.id);
+                            if(cardDetails && cardDetails.length>0){
+                                const data = await stripe.chargeClient(clientInfo.id, cardDetails[0].id);
+                                updatedData.push(data);
+                            }
+                            
+                    
+                        }
+                    }
+                }
+                resolve({'message':'Auto Payment Successfull',data:updatedData});
+            } catch (err) {
+                console.log(err);
+                reject(err);
+            }
+        })
+        
     }
 }
 

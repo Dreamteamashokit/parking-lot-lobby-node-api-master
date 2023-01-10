@@ -50,6 +50,7 @@ router.get('/dashboard', async(req,res) => {
 router.get("/client-list", async (req,res)=> {
 try {
   let response = await AdminController.clientList(req.query); // // req.userData => admin data
+  //await AdminController.autoPayMembershipPlan();
   return res.status(200).send({status:true,statusCode:200,message: "fetch data successfully" ,  data:response})
 } catch(err) {
   let statusCode = err.status || 500;
@@ -99,6 +100,8 @@ router.post("/reset-client-password", async (req,res)=> {
 });
 router.post("/client-membership", async (req,res)=> {
   try {
+    console.log('admin routes line 102');
+    console.log(req.body);
     await AdminController.clientMembership(req.body); // // req.userData => admin data
     return res.status(200).send({status:true,statusCode:200,message: "update plan successfully"})
   } catch(err) {

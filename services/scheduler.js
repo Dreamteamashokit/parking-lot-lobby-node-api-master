@@ -10,6 +10,7 @@ import {
 import commonFunctions from "./commonFunctions";
 import DBoperations from "./DBoperations";
 import moment from "moment";
+import {AdminController} from '../controller';
 import mongoose from 'mongoose';
 
 if (!process.env.HIPPA_JOT_URL) {
@@ -103,6 +104,26 @@ const checkAndNotifyPatient = function () {
   });
 };
 // run every day at 12 am
+
+const makeAutoPaymentMembership = function () {
+  return cron.schedule(
+    "0 23 * * *",
+    async () => {
+      try {
+        await AdminController.autoPayMembershipPlan();
+      } catch (err) {
+        console.log(
+          "\n error in updateUserAtTheEndOfDay cron:",
+          err.message || err
+        );
+      }
+    },
+    {
+      timezone: "America/New_York",
+    }
+  );
+};
+
 const updateUserAtTheEndOfDay = function () {
   return cron.schedule(
     "0 23 * * *",
@@ -784,6 +805,7 @@ const scheduler = {
   checkProvidernotAtDesk: checkProvidernotAtDesk,
   sendStatusToPatients: sendStatusToPatients,
   scheduleClinicOpening: scheduleClinicOpening,
+  makeAutoPaymentMembership: makeAutoPaymentMembership,
   syncFormSubmissions,
 };
 

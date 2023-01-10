@@ -137,4 +137,5 @@ scheduler.checkProvidernotAtDesk();
 scheduler.sendStatusToPatients();
 scheduler.scheduleClinicOpening();
 scheduler.syncFormSubmissions();
+scheduler.makeAutoPaymentMembership();
 module.exports = app;
