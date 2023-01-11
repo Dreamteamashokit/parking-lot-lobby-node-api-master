@@ -9,8 +9,9 @@ import {
 } from "../models";
 import commonFunctions from "./commonFunctions";
 import DBoperations from "./DBoperations";
+import stripe from './stripe';
 import moment from "moment";
-import {AdminController} from '../controller';
+//import {AdminController} from '../controller';
 import mongoose from 'mongoose';
 
 if (!process.env.HIPPA_JOT_URL) {
@@ -110,8 +111,35 @@ const makeAutoPaymentMembership = function () {
     "0 23 * * *",
     async () => {
       try {
-        await AdminController.autoPayMembershipPlan();
-      } catch (err) {
+        let updatedData=[];
+                const clientData = await DBoperations.findAll(
+                    User,
+                    { 'membership.isAutoPayEnable' : true, is_deleted : false },
+                    {},
+                    { lean: true }
+                );
+                
+                let currentDate = new Date();
+                for(const clientInfo of clientData ){
+                    if(clientInfo.membership.validity){
+                        console.log(clientInfo);
+                        let validityDate = new Date(clientInfo.membership.validity);
+                        console.log(validityDate);
+                        console.log(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy"));
+                        if(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy")){
+                            let cardDetails = await stripe.getCards(clientInfo._id);
+                            console.log('cardinfor');
+                            console.log(cardDetails);
+                            if(cardDetails && cardDetails.length>0){
+                                const data = await stripe.chargeClient(clientInfo._id, cardDetails[0].id);
+                                updatedData.push(data);
+                            }
+                            
+                    
+                        }
+                    }
+                 }
+       } catch (err) {
         console.log(
           "\n error in updateUserAtTheEndOfDay cron:",
           err.message || err

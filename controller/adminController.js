@@ -215,7 +215,7 @@ class AdminController {
                 client['membership']['isAutoPayEnable'] = payload.isAutoPayEnable?payload.isAutoPayEnable:false;
                 
                 await client.save();
-                //await autoPayMembershipPlan();
+                //await AdminController.autoPayMembershipPlan();
                 return resolve(true);
             } catch (err) {
                 return reject(err);
@@ -496,12 +496,14 @@ class AdminController {
                     if(clientInfo.membership.validity){
                         console.log(clientInfo);
                         let validityDate = new Date(clientInfo.membership.validity);
+                        console.log(validityDate);
                         console.log(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy"));
                         if(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy")){
-                            await commonFunctions.checkUserInformation(clientInfo);
-                            let cardDetails = await stripe.getCards(clientInfo.id);
+                            let cardDetails = await stripe.getCards(clientInfo._id);
+                            console.log('cardinfor');
+                            console.log(cardDetails);
                             if(cardDetails && cardDetails.length>0){
-                                const data = await stripe.chargeClient(clientInfo.id, cardDetails[0].id);
+                                const data = await stripe.chargeClient(clientInfo._id, cardDetails[0].id);
                                 updatedData.push(data);
                             }
                             

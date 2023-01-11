@@ -50,7 +50,6 @@ router.get('/dashboard', async(req,res) => {
 router.get("/client-list", async (req,res)=> {
 try {
   let response = await AdminController.clientList(req.query); // // req.userData => admin data
-  //await AdminController.autoPayMembershipPlan();
   return res.status(200).send({status:true,statusCode:200,message: "fetch data successfully" ,  data:response})
 } catch(err) {
   let statusCode = err.status || 500;
