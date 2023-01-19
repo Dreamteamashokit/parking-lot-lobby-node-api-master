@@ -124,7 +124,8 @@ const makeAutoPaymentMembership = function () {
                         
                         let validityDate = new Date(clientInfo.membership.validity);
                         console.log(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy"));
-                        if(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy")){
+                        console.log(moment(currentDate).format("DD/MM/yyyy") >= moment(validityDate).format("DD/MM/yyyy"));
+                        if(moment(currentDate).format("DD/MM/yyyy") >= moment(validityDate).format("DD/MM/yyyy")){
                             let cardDetails = await stripe.getCards(clientInfo._id);
                             if(cardDetails && cardDetails.length>0){
                                 const data = await stripe.chargeClient(clientInfo._id, cardDetails[0].id);
