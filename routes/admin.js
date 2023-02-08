@@ -99,6 +99,8 @@ router.post("/reset-client-password", async (req,res)=> {
 });
 router.post("/client-membership", async (req,res)=> {
   try {
+    console.log('admin routes line 102');
+    console.log(req.body);
     await AdminController.clientMembership(req.body); // // req.userData => admin data
     return res.status(200).send({status:true,statusCode:200,message: "update plan successfully"})
   } catch(err) {
