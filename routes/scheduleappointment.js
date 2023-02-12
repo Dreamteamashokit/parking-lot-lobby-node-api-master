@@ -10,7 +10,7 @@ const messages = {
     expired: 'Your link is expired, please get new link by sending "Arrived" sms.'
 }
 
-router.post('/user', async (req,res) => {
+router.post('/', async (req,res) => {
     try {
         let response = await ScheduleAppointmentController.scheduleAppointmentMethod(req.body);
         return res.status(200).send({status:true, message: commonFunctions.getSuccessMessage('POST') ,  data:response})
