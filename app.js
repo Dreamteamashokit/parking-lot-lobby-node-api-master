@@ -3,7 +3,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 dotenv.config();
-import {userRouter, twilioRouter, commonRouter, adminRouter, jotformRouter} from './routes/index.js'
+import {userRouter, twilioRouter, commonRouter, adminRouter, jotformRouter, scheduleAppointmentRouter} from './routes/index.js'
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger.json';
 import {scheduler} from './services';
@@ -105,6 +105,7 @@ app.use('/user', userRouter);
 app.use('/common', commonRouter);
 app.use('/admin', adminRouter);
 app.use('/jotform', jotformRouter);
+app.use('/scheduleappointment' ,scheduleAppointmentRouter);
 app.use('/documentation',swaggerUi.serve, swaggerUi.setup(swaggerDocument, options));
 // catch 404 and forward to error handler
 app.use('*', (req, res) => {

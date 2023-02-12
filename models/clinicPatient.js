@@ -14,6 +14,7 @@ var clinicPatientSchema = Schema({
     is_delete:{type:Boolean,default:false},
     noShow:{type:Boolean,default:false},
     visitDate:{type:Date},
+    scheduleByUser:{type:Boolean,default:false},
     checkIn:{type:Date},
     inQueueAt:{type:Date},
     checkOut:{type:Date},
