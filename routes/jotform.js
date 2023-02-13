@@ -9,6 +9,7 @@ const messages = {
 
 router.get('/:id', async (req, res) => {
     try {
+        console.log('get line 12');
         const patient = await DbOperations.findOne(
             ClinicPatient,
             {

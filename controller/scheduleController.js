@@ -8,6 +8,7 @@ import {
   SubPatientSchema,
 } from "../models";
 import { DbOperations, commonFunctions, logger } from "../services";
+import moment from 'moment';
 const twilio = require('twilio');
 const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -53,6 +54,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               userType: 2,
               fullNumber: payloadData.mobile,
               FromCountry: payloadData.FromCountry || "",
+              dob: new Date(payloadData.dob),
               first_name:payloadData.FirstName,
               last_name:payloadData.LastName,
               locationId: locationExist._id,
@@ -106,6 +108,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
   ) {
     return new Promise(async (resolve) => {
       try {
+        console.log('payloadData',payloadData);
         const { start, end } = await commonFunctions.getUTCStartEndOfTheDay(); 
         const checkoutQuery = {
           locationId: locationId,
@@ -201,6 +204,8 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             }
   
             const formatedDate = start.format("MM/DD/YYYY");
+            // let visitDateRaw = new Date(payloadData.visitDate);
+            let visitDateFormated = moment(new Date(payloadData.visitDate)).format("MM/DD/YYYY");
             //let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${baseUrl}/patient/${locationId}/${patientID}`;
             const clinicPayload = {
               ...clinicQuery,
@@ -210,6 +215,8 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             delete clinicPayload.visitDate;
             if (!existClinicPatient) {
               clinicPayload["visitDate"] = new Date(payloadData.visitDate);
+              clinicPayload["visitReason"] = new Date(payloadData.visitReason);
+              
               let savedRecord = await DbOperations.saveData(
                 ClinicPatient,
                 clinicPayload
@@ -258,7 +265,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               const responseJotFormUrl = await jotFormSubmit(
                 savedRecord._id,
               );
-              let sendMessage = `Welcome - Your appoitment has been booked at ${business} for ${formatedDate}): ${responseJotFormUrl}. Note : Please fill the form once you reached to Clinic`;
+              let sendMessage = `Welcome - Your appoitment has been booked at ${business} for ${visitDateFormated}): ${responseJotFormUrl}. Note : Please fill the form once you reached to Clinic`;
               // console.log("\n sendMessage:", sendMessage);
               const data = await client.messages.create({
                 body:sendMessage,
@@ -281,7 +288,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               const responseJotFormUrl = await jotFormSubmit(
                 existClinicPatient._id,
               );
-              let sendMessage = `Welcome - Your appoitment has been booked at ${business} for ${formatedDate}): ${responseJotFormUrl}. Note : Please fill the form once you reached to Clinic`;
+              let sendMessage = `Welcome - Your appoitment has been booked at ${business} for ${visitDateFormated}): ${responseJotFormUrl}. Note : Please fill the form once you reached to Clinic`;
               // console.log("\n sendMessage:", sendMessage);
               const data = await client.messages.create({
                 body:sendMessage,
