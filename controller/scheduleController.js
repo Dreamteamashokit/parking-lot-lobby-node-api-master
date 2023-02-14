@@ -215,7 +215,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             delete clinicPayload.visitDate;
             if (!existClinicPatient) {
               clinicPayload["visitDate"] = new Date(payloadData.visitDate);
-              clinicPayload["visitReason"] = new Date(payloadData.visitReason);
+              clinicPayload["visitReason"] = payloadData.visitReason;
               
               let savedRecord = await DbOperations.saveData(
                 ClinicPatient,
