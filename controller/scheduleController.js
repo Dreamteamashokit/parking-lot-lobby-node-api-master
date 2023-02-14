@@ -20,26 +20,25 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
     static async scheduleAppointmentMethod(payloadData) {
       return new Promise(async (resolve, reject) => {
         try {
-          //console.log(payloadData);
-          console.log("line numner 22");
+          
           if (!payloadData.mobile) {
             throw { status: 400, message: "Missing your phone number." };
           }
-          console.log("line numner 26");
+          
           const locationExist = await DbOperations.findOne(
             locationSchema,
             { _id: payloadData.locationId },
             {},
             { lean: true }
           );
-          console.log("line numner 33");
+          
           if (!locationExist) {
             throw {
               status: 400,
               message: "No location found for this twilio number.",
             };
           }
-          console.log("line numner 40");
+          
           let message_body = payloadData.Body || "";
           payloadData.Body = message_body.toLowerCase();
           const checkPhoneExist = await DbOperations.findOne(
@@ -48,7 +47,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             {},
             { lean: true }
           );
-          console.log("line numner 49");
+          
           if (!checkPhoneExist) {
             const payload = {
               userType: 2,
@@ -60,7 +59,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               locationId: locationExist._id,
               clinicId: locationExist.clinicId,
             };
-            console.log("line numner 60");
+            
             let response = await DbOperations.saveData(User, payload);
             const { reply, isUpdate } = await checkRequestedMessage(
               payloadData,
@@ -68,14 +67,14 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               locationExist._id,
               locationExist.clinicId
             );
-            console.log("line numner 68");
+            
             if (!reply) {
               return resolve(reply);
             }
             
             return resolve(reply);
           } else {
-            console.log("line numner 75");
+            
             const { reply, isUpdate } = await checkRequestedMessage(
               payloadData,
               checkPhoneExist,
@@ -108,7 +107,6 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
   ) {
     return new Promise(async (resolve) => {
       try {
-        console.log('payloadData',payloadData);
         const { start, end } = await commonFunctions.getUTCStartEndOfTheDay(); 
         const checkoutQuery = {
           locationId: locationId,
@@ -147,6 +145,12 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
         clinicSetting.businessInformation.companyName
           ? clinicSetting.businessInformation.companyName
           : "Our business";
+      const businessAddress =
+        clinicSetting &&
+        clinicSetting.businessInformation &&
+        clinicSetting.businessInformation.companyAddress
+          ? clinicSetting.businessInformation.companyAddress
+          : "Our Address";
             const clinicQuery = {
               locationId: locationId,
               clinicId: clinicId,
@@ -204,18 +208,17 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             }
   
             const formatedDate = start.format("MM/DD/YYYY");
-            // let visitDateRaw = new Date(payloadData.visitDate);
             let visitDateFormated = moment(new Date(payloadData.visitDate)).format("MM/DD/YYYY");
-            //let sendMessage = `Welcome - Please remain in your car and let us know you are here at ${business} by tapping the link below and filling out the form(note that this link is only for todays date which is ${formatedDate}): ${baseUrl}/patient/${locationId}/${patientID}`;
             const clinicPayload = {
               ...clinicQuery,
               inQueue: false,
               //submissionID: submissionId
             };
+            clinicPayload["visitDate"] = new Date(payloadData.visitDate);
+            clinicPayload["visitReason"] = payloadData.visitReason;
+              
             delete clinicPayload.visitDate;
             if (!existClinicPatient) {
-              clinicPayload["visitDate"] = new Date(payloadData.visitDate);
-              clinicPayload["visitReason"] = payloadData.visitReason;
               
               let savedRecord = await DbOperations.saveData(
                 ClinicPatient,
@@ -265,14 +268,13 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               const responseJotFormUrl = await jotFormSubmit(
                 savedRecord._id,
               );
-              let sendMessage = `Welcome - Your appoitment has been booked at ${business} for ${visitDateFormated}): ${responseJotFormUrl}. Note : Please fill the form once you reached to Clinic`;
-              // console.log("\n sendMessage:", sendMessage);
+              let sendMessage = `Thank you for registering for your appointment at ${business}, ${businessAddress} at ${visitDateFormated}.  Once you arrive click this link ${responseJotFormUrl} and fill out the form. After you submit your form, staff will message you when they are ready to see you.`;
               const data = await client.messages.create({
                 body:sendMessage,
                 to: `${payloadData.mobile}`, // Text this number
                 from:process.env.TWILIO_NUMBER,
              })
-             console.log(data);
+             
               return resolve({
                 reply: sendMessage,
                 isUpdate: true,
@@ -288,15 +290,14 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               const responseJotFormUrl = await jotFormSubmit(
                 existClinicPatient._id,
               );
-              let sendMessage = `Welcome - Your appoitment has been booked at ${business} for ${visitDateFormated}): ${responseJotFormUrl}. Note : Please fill the form once you reached to Clinic`;
-              // console.log("\n sendMessage:", sendMessage);
+              let sendMessage = `Thank you for registering for your appointment at ${business}, ${businessAddress} at ${visitDateFormated}.  Once you arrive click this link ${responseJotFormUrl} and fill out the form. After you submit your form, staff will message you when they are ready to see you.`;
+              
               const data = await client.messages.create({
                 body:sendMessage,
                 to: `${payloadData.mobile}`, // Text this number
                 from:process.env.TWILIO_NUMBER,
              })
-             console.log(data);
-              return resolve({
+            return resolve({
                 reply: sendMessage,
                 isUpdate: true,
               });
@@ -322,10 +323,10 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
         const { status, message, short_response } =
           await commonFunctions.shorterUrl(jotFormUrl);
         if (!status) {
-          // console.log("when bitly no status:", message);
+          
           return resolve(encodeURI(jotFormUrl));
         }
-        // console.log("\n\n when bitly status :", short_response);
+        
         const short_url =
           short_response && short_response.link
             ? short_response.link
