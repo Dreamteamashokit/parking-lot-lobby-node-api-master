@@ -24,7 +24,17 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
           if (!payloadData.mobile) {
             throw { status: 400, message: "Missing your phone number." };
           }
-          
+          const { NumMedia, MessageSid } = payloadData;
+          let saveOperations = [];
+          for (var i = 0; i < NumMedia; i++) {  // eslint-disable-line
+            const mediaUrl = payloadData[`MediaUrl${i}`];
+            const contentType = payloadData[`MediaContentType${i}`];
+            const mediaSid = path.basename(urlUtil.parse(mediaUrl).pathname);
+      
+            const mediaItem = { mediaSid, MessageSid, mediaUrl, contentType };
+            saveOperations.push(commonFunctions.SaveMmsMedia(mediaItem))
+          }
+          saveOperations = await Promise.all(saveOperations);
           const locationExist = await DbOperations.findOne(
             locationSchema,
             { _id: payloadData.locationId },
@@ -47,7 +57,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             {},
             { lean: true }
           );
-          
+          const { updatedDate } = await commonFunctions.subtractMinutes(10);
           if (!checkPhoneExist) {
             const payload = {
               userType: 2,
@@ -61,6 +71,23 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             };
             
             let response = await DbOperations.saveData(User, payload);
+            const messageQuery = {
+              patientId: response._id,
+              clinicId: locationExist.clinicId,
+              locationId: locationExist._id,
+              createdAt: { $gte: new Date(updatedDate) },
+            };
+            const lastMessage = await DbOperations.count(Message, messageQuery);
+            // console.log("\n lastMessage:", lastMessage);
+            await commonFunctions.updateMessage(
+              locationExist._id,
+              locationExist.clinicId,
+              response._id,
+              message_body,
+              1,
+              false,
+              saveOperations
+            );
             const { reply, isUpdate } = await checkRequestedMessage(
               payloadData,
               response,
@@ -71,10 +98,44 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             if (!reply) {
               return resolve(reply);
             }
-            
+            if (isUpdate)
+            await commonFunctions.initialUpdateMessage(
+              locationExist._id,
+              locationExist.clinicId,
+              response._id,
+              reply,
+              2
+            );
+          else
+            await commonFunctions.updateMessage(
+              locationExist._id,
+              locationExist.clinicId,
+              response._id,
+              reply,
+              2,
+              false,
+              saveOperations
+            );
+
             return resolve(reply);
           } else {
-            
+            const messageQuery = {
+              patientId: checkPhoneExist._id,
+              clinicId: locationExist.clinicId,
+              locationId: locationExist._id,
+              createdAt: { $gte: new Date(updatedDate) },
+            };
+            const lastMessage = await DbOperations.count(Message, messageQuery);
+            // console.log("\n else lastMessage:", lastMessage);
+            await commonFunctions.updateMessage(
+              locationExist._id,
+              locationExist.clinicId,
+              checkPhoneExist._id,
+              message_body,
+              1,
+              false,
+              saveOperations,
+            );
             const { reply, isUpdate } = await checkRequestedMessage(
               payloadData,
               checkPhoneExist,
@@ -85,7 +146,24 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             if (!reply) {
               return resolve(reply);
             }
-            
+            if (isUpdate)
+            await commonFunctions.initialUpdateMessage(
+              locationExist._id,
+              locationExist.clinicId,
+              checkPhoneExist._id,
+              reply,
+              2
+            );
+          else
+            await commonFunctions.updateMessage(
+              locationExist._id,
+              locationExist.clinicId,
+              checkPhoneExist._id,
+              reply,
+              2,
+              false,
+              saveOperations
+            );
             return resolve(reply);
           }
         } catch (err) {
