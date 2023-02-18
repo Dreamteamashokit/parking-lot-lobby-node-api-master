@@ -540,7 +540,7 @@ const sendStatusToPatients = function () {
 };
 
 const deleteLogs = function () {
-  return cron.schedule("* * 1 * *", async () => {
+  return cron.schedule("0 23 * * *", async () => {
     try {
           console.log('in scheduler');
           let todayDate = new Date();
