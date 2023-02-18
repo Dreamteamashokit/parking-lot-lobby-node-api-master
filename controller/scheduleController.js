@@ -60,7 +60,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
           const { updatedDate } = await commonFunctions.subtractMinutes(10);
           if (!checkPhoneExist) {
             const payload = {
-              userType: 2,
+              userType: 1,
               fullNumber: payloadData.mobile,
               FromCountry: payloadData.FromCountry || "",
               dob: new Date(payloadData.dob),
@@ -292,10 +292,10 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
               inQueue: false,
               //submissionID: submissionId
             };
-            clinicPayload["visitDate"] = new Date(payloadData.visitDate);
-            clinicPayload["visitReason"] = payloadData.visitReason;
-              
+            
             delete clinicPayload.visitDate;
+            clinicPayload["visitDate"] = new Date(payloadData.visitDate);
+            clinicPayload["visitReason"] = payloadData.visitReason;     
             if (!existClinicPatient) {
               
               let savedRecord = await DbOperations.saveData(
