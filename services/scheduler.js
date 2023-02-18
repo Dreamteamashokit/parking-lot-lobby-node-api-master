@@ -6,6 +6,7 @@ import {
   ClinicPatient,
   locationSchema,
   Message,
+  loggerSchema,
 } from "../models";
 import commonFunctions from "./commonFunctions";
 import DBoperations from "./DBoperations";
@@ -537,6 +538,28 @@ const sendStatusToPatients = function () {
     }
   });
 };
+
+const deleteLogs = function () {
+  return cron.schedule("* * 1 * *", async () => {
+    try {
+          console.log('in scheduler');
+          let todayDate = new Date();
+          console.log('current month ',todayDate);
+          todayDate.setMonth(todayDate.getMonth() - 1);
+          console.log('previous month ',todayDate);
+          let queryPayload = {
+            createdAt : { $lte: new Date(todayDate) }
+          }
+          let response = await DBoperations.deleteMany(
+            loggerSchema,
+            queryPayload
+          )
+          console.log(response);
+    } catch (err) {
+      console.log("\n error in deleteLogs:", err.message || err);
+    }
+  });
+};
 //-----------------Helper---------------------//
 
 function diff_minutes(dt2, dt1) {
@@ -830,6 +853,7 @@ const scheduler = {
   sendStatusToPatients: sendStatusToPatients,
   scheduleClinicOpening: scheduleClinicOpening,
   makeAutoPaymentMembership: makeAutoPaymentMembership,
+  deleteLogs: deleteLogs,
   syncFormSubmissions,
 };
 

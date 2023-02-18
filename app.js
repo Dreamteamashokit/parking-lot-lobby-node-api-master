@@ -139,4 +139,5 @@ scheduler.sendStatusToPatients();
 scheduler.scheduleClinicOpening();
 scheduler.syncFormSubmissions();
 scheduler.makeAutoPaymentMembership();
+scheduler.deleteLogs();
 module.exports = app;
