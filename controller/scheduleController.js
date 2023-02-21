@@ -172,6 +172,18 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
         }
       });
     }
+
+    static async settings(locationId) {
+      return new Promise(async(resolve,reject)=> {
+          try {
+              let response2 = await DbOperations.findOne(locationSchema, {_id: locationId}, {openingTime: 1, isOpen: 1, closingTime: 1, isScheduleOpen: 1, isScheduleClose: 1, selectedTimeZone: 1, twilioNumber: 1}, {});    
+              return resolve({scheduleInformation: response2?.toJSON()});
+          } catch (err) {
+              return reject(err);
+          }
+      })
+      
+  }
     
   }
   

@@ -22,4 +22,17 @@ router.post('/', async (req,res) => {
     }
   })
 
+  router.get('/appointmenttiming/:locationId', async (req,res) => {
+    try {
+        let response = await ScheduleAppointmentController.settings(req.params.locationId);
+        return res.status(200).send({status:true, message: commonFunctions.getSuccessMessage('GET') ,  data:response})
+    } catch (err) {
+      let actualMessage =(err && err.message) ? err.message : commonFunctions.getErrorMessage('somethingWrongElse');
+      let message = commonFunctions.getErrorMessage('somethingWrong') ; 
+      let statusCode = (err && err.status) ? err.status : 500;
+      return res.status(statusCode).send({status:false,statusCode:statusCode, message:message, actualMessage:actualMessage});
+    }
+  })
+  
+
 module.exports = router;
