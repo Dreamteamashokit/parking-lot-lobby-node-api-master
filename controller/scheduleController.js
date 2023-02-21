@@ -298,7 +298,7 @@ const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUT
             }
   
             const formatedDate = start.format("MM/DD/YYYY");
-            let visitDateFormated = moment(new Date(payloadData.visitDate)).format("MM/DD/YYYY");
+            let visitDateFormated = moment(new Date(payloadData.visitDate)).format("MM/DD/YYYY HH:mm");
             const clinicPayload = {
               ...clinicQuery,
               inQueue: false,
