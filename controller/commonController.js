@@ -309,6 +309,7 @@ class CommonController {
               submissionID: 1,
               reviewDocument: 1,
               notifyAt: 1,
+              scheduleByUser:1,
               chat_messages: { $size: "$chat_messages" },
               subPatientData: "$subPatientData",
             },

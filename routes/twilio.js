@@ -17,6 +17,7 @@ router.get('/',async (req,res) => {
 })
 router.post('/sms', async function(req, res, next) {
   try {
+    
     const twiml = new MessagingResponse();
     let response = await TwilioController.sms(req.body);
     logger.dump({path: 'twillio route: 21', body: req.body, response})
@@ -37,6 +38,7 @@ router.post('/sms', async function(req, res, next) {
 });
 router.post('/jotNotification', upload.any(), async function (req, res) {
   try {
+    
     logger.dump({path: 'twillio route: 38', body: req.body})
     console.log('\n req.body:', req.body.submissionID, '\n formID:', req.body.formID);
     if(req.body && req.body.submissionID && req.body.rawRequest) {

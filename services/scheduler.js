@@ -6,6 +6,7 @@ import {
   ClinicPatient,
   locationSchema,
   Message,
+  loggerSchema,
 } from "../models";
 import commonFunctions from "./commonFunctions";
 import DBoperations from "./DBoperations";
@@ -121,11 +122,10 @@ const makeAutoPaymentMembership = function () {
                 let currentDate = new Date();
                 for(const clientInfo of clientData ){
                     if(clientInfo.membership.validity){
-                        
                         let validityDate = new Date(clientInfo.membership.validity);
-                        console.log(moment(currentDate).format("DD/MM/yyyy") == moment(validityDate).format("DD/MM/yyyy"));
-                        console.log(moment(currentDate).format("DD/MM/yyyy") >= moment(validityDate).format("DD/MM/yyyy"));
-                        if(moment(currentDate).format("DD/MM/yyyy") >= moment(validityDate).format("DD/MM/yyyy")){
+                        console.log(moment(currentDate).format("yyyy/MM/DD") == moment(validityDate).format("yyyy/MM/DD"));
+                        console.log(moment(currentDate).format("yyyy/MM/DD") >= moment(validityDate).format("yyyy/MM/DD"));
+                        if(moment(currentDate).format("yyyy/MM/DD") >= moment(validityDate).format("yyyy/MM/DD")){
                             let cardDetails = await stripe.getCards(clientInfo._id);
                             if(cardDetails && cardDetails.length>0){
                                 const data = await stripe.chargeClient(clientInfo._id, cardDetails[0].id);
@@ -538,6 +538,28 @@ const sendStatusToPatients = function () {
     }
   });
 };
+
+const deleteLogs = function () {
+  return cron.schedule("0 23 * * *", async () => {
+    try {
+          console.log('in scheduler');
+          let todayDate = new Date();
+          console.log('current month ',todayDate);
+          todayDate.setMonth(todayDate.getMonth() - 1);
+          console.log('previous month ',todayDate);
+          let queryPayload = {
+            createdAt : { $lte: new Date(todayDate) }
+          }
+          let response = await DBoperations.deleteMany(
+            loggerSchema,
+            queryPayload
+          )
+          console.log(response);
+    } catch (err) {
+      console.log("\n error in deleteLogs:", err.message || err);
+    }
+  });
+};
 //-----------------Helper---------------------//
 
 function diff_minutes(dt2, dt1) {
@@ -831,6 +853,7 @@ const scheduler = {
   sendStatusToPatients: sendStatusToPatients,
   scheduleClinicOpening: scheduleClinicOpening,
   makeAutoPaymentMembership: makeAutoPaymentMembership,
+  deleteLogs: deleteLogs,
   syncFormSubmissions,
 };
 
